@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AniList - Tweaks
 // @namespace    http://tampermonkey.net/
-// @version      3.7
+// @version      3.8
 // @description  Ajoute certaines infos qui ne sont pas existant de base sur anilist
 // @author       Symswag
 // @match        https://anilist.co/*
@@ -102,8 +102,7 @@
             const data = await res.json();
 
             if (data && data.length > 0) {
-                const dateObj = new Date(data[0].completed_at);
-                cachedCompletionDate = dateObj.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+                cachedCompletionDate = new Date(data[0].completed_at);
             } else {
                 cachedCompletionDate = null;
             }
@@ -136,8 +135,7 @@
             if (data) {
                 data.forEach(row => {
                     const dateObj = new Date(row.completed_at);
-                    const formatted = dateObj.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                    historyMapCache.set(row.media_id, formatted);
+                    historyMapCache.set(row.media_id, dateObj);
                 });
             }
         } catch (err) {
@@ -148,6 +146,22 @@
         return historyMapCache;
     }
 
+    // ==========================================
+    // 🎨 Ecrat entre une date et aujourd'hui
+    // ==========================================
+    function dateGapToday(date)
+    {
+        if(!date) return;
+
+        const dTargetClean = new Date(date);
+        dTargetClean.setHours(0, 0, 0, 0);
+
+        const dTodayClean = new Date();
+        dTodayClean.setHours(0, 0, 0, 0);
+
+        const diffTime = dTodayClean - dTargetClean;
+        return Math.round(diffTime / (1000 * 60 * 60 * 24));
+    }
 
     // ==========================================
     // 🎨 INJECTION 1 : PAGE DE LISTE D'ANIMES
@@ -173,12 +187,15 @@
             const mediaId = parseInt(match[1]);
 
             if (map.has(mediaId)) {
-                const dateStr = map.get(mediaId);
+                const date = map.get(mediaId);
+                const dateStr = date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+                const daysCount = dateGapToday(date);
 
                 const iconDiv = document.createElement('div');
                 iconDiv.className = 'custom-watch-date-icon';
                 // Le CSS custom utilise cet attribut 'label' pour l'afficher !
-                iconDiv.setAttribute('label', `Terminé le ${dateStr}`);
+                iconDiv.setAttribute('label', `Terminé le ${dateStr} (${daysCount}j)`);
 
                 // SVG Bootstrap
                 iconDiv.innerHTML = `
@@ -309,7 +326,11 @@
             dateBadge.style.fontWeight = '600';
 
             if (cachedCompletionDate) {
-                dateBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg> Terminé le ${cachedCompletionDate}`;
+                const cachedCompletionDateStr = cachedCompletionDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+                const daysCount = dateGapToday(cachedCompletionDate);
+
+                dateBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg> Terminé le ${cachedCompletionDateStr} (${daysCount}j)`;
                 dateBadge.style.backgroundColor = 'rgba(62, 207, 142, 0.1)';
                 dateBadge.style.color = '#3ECF8E';
             } else {
