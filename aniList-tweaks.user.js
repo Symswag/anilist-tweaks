@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AniList - Tweaks
 // @namespace    http://tampermonkey.net/
-// @version      4.1
+// @version      4.1.1
 // @description  Ajoute des infos Supabase manquantes et des indicateurs de couleur pour les listes personnalisées
 // @author       Symswag
 // @match        https://anilist.co/*
@@ -474,7 +474,7 @@
                     const finalShadow = cardBoxShadows.join(', ');
 
                     // On ajoute une bordure transparente pour éviter que l'image ne se décale
-                    card.style.setProperty('border', '1px solid transparent', 'important');
+                    // card.style.setProperty('border', '1px solid transparent', 'important');
                     // On applique notre méga-ombre multicouches
                     card.style.setProperty('box-shadow', finalShadow, 'important');
 
