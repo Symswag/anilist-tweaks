@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         AniList - Tweaks
 // @namespace    http://tampermonkey.net/
-// @version      3.8
-// @description  Ajoute certaines infos qui ne sont pas existant de base sur anilist
+// @version      4.0
+// @description  Ajoute des infos Supabase manquantes et des indicateurs de couleur pour les listes personnalisées
 // @author       Symswag
 // @match        https://anilist.co/*
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=anilist.co
 // @grant        none
 // @run-at       document-end
 // ==/UserScript==
@@ -13,34 +14,48 @@
     'use strict';
 
     // ==========================================
-    // 🔧 CONFIGURATION SUPABASE
+    // 🔧 CONFIGURATION GÉNÉRALE
     // ==========================================
+
+    // --- SUPABASE ---
     const SUPABASE_URL = 'SUPABASE_URL';
     const SUPABASE_ANON_KEY = 'SUPABASE_ANON_KEY';
     const TABLE_NAME = 'anime_history';
 
-    // Variables d'état (Page détaillée)
+    // --- ANILIST CUSTOM LISTS ---
+    const ANILIST_USERNAME = "ANILIST_USERNAME";
+    const LISTS_CONFIG = [
+        // Tu peux ajouter d'autres listes ici :
+        // { name: "Films", color: "#ff00ff" }
+    ];
+
+    // ==========================================
+    // 🧠 VARIABLES D'ÉTAT
+    // ==========================================
+    // Page détaillée
     let lastPathname = location.pathname;
     let cachedCompletionDate = null;
     let hasFetchedForCurrentMedia = false;
     let isFetchingSingle = false;
 
-    // Variables d'état (Page Animelist)
+    // Page Animelist
     let historyMapCache = null;
     let isFetchingMap = false;
+
+    // Listes Personnalisées
+    let customListsMapCache = null;
+    let isFetchingCustomLists = false;
 
     // ==========================================
     // 🎨 STYLES CSS INJECTÉS
     // ==========================================
     const style = document.createElement('style');
     style.innerHTML = `
-        /* 1. On force le bloc TITLE à devenir le repère spatial */
+        /* --- STYLES : DATES DE VISIONNAGE --- */
         .entry-card .title {
-            /* S'assure que l'icône n'est pas masquée si la carte coupe ce qui dépasse */
             overflow: visible !important;
         }
 
-        /* 2. L'icône se cale parfaitement sur le bord SUPÉRIEUR du titre */
         .custom-watch-date-icon {
             position: absolute;
             bottom: 100%;
@@ -57,15 +72,14 @@
             transform: scale(1.1);
         }
 
-        /* 3. LE CORRECTIF : L'infobulle (tooltip) en pur CSS qui imite AniList */
         .custom-watch-date-icon::after {
             content: attr(label);
             position: absolute;
             bottom: 100%;
             left: 50%;
             transform: translateX(-50%) translateY(5px);
-            background: #11161d; /* Fond sombre AniList */
-            color: #9fadbd; /* Texte AniList */
+            background: #11161d;
+            color: #9fadbd;
             padding: 8px 12px;
             border-radius: 4px;
             font-size: 1.2rem;
@@ -82,15 +96,29 @@
         .custom-watch-date-icon:hover::after {
             opacity: 1;
             visibility: visible;
-            transform: translateX(-50%) translateY(-5px); /* Petit effet de glissement */
+            transform: translateX(-50%) translateY(-5px);
+        }
+
+        /* --- STYLES : POINTS DE LISTES PERSONNALISÉES --- */
+        span.release-status.custom-list-dot {
+            opacity: 1 !important;
+            left: auto !important;
+            top: -4px !important;
+            width: 11px !important;
+            height: 11px !important;
+            border-radius: 50% !important;
+            z-index: 50 !important;
+            pointer-events: auto !important;
         }
     `;
     document.head.appendChild(style);
 
 
     // ==========================================
-    // 🌐 REQUÊTE SUPABASE : 1 ANIME (Page Détail)
+    // 🌐 REQUÊTES API
     // ==========================================
+
+    // 1. SUPABASE : Page Détail (1 Anime)
     async function fetchSingleCompletionDate(mediaId) {
         if (isFetchingSingle || hasFetchedForCurrentMedia) return;
         isFetchingSingle = true;
@@ -116,10 +144,7 @@
         }
     }
 
-
-    // ==========================================
-    // 🌐 REQUÊTE SUPABASE : TOUS LES ANIMES (Page Liste)
-    // ==========================================
+    // 2. SUPABASE : Page Liste (Tous les Animes)
     async function fetchAllHistory() {
         if (historyMapCache) return historyMapCache;
         if (isFetchingMap) return null;
@@ -146,26 +171,81 @@
         return historyMapCache;
     }
 
-    // ==========================================
-    // 🎨 Ecrat entre une date et aujourd'hui
-    // ==========================================
-    function dateGapToday(date)
-    {
-        if(!date) return;
+    // 3. GRAPHQL : Listes Personnalisées AniList
+    async function fetchCustomLists() {
+        if (customListsMapCache) return customListsMapCache;
+        if (isFetchingCustomLists) return null;
+        isFetchingCustomLists = true;
 
+        const query = `
+        query {
+          MediaListCollection(userName: "${ANILIST_USERNAME}", type: ANIME) {
+            lists {
+              name
+              entries {
+                mediaId
+              }
+            }
+          }
+        }
+        `;
+
+        try {
+            const res = await fetch('https://graphql.anilist.co', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ query })
+            });
+
+            const data = await res.json();
+            const allLists = data.data.MediaListCollection.lists;
+
+            customListsMapCache = new Map();
+
+            LISTS_CONFIG.forEach(config => {
+                const listData = allLists.find(list => list.name === config.name);
+                if (listData) {
+                    listData.entries.forEach(entry => {
+                        const id = entry.mediaId;
+                        if (!customListsMapCache.has(id)) {
+                            customListsMapCache.set(id, []);
+                        }
+                        customListsMapCache.get(id).push(config);
+                    });
+                }
+            });
+        } catch (error) {
+            console.error("❌ Erreur GraphQL (Custom Lists) :", error);
+        } finally {
+            isFetchingCustomLists = false;
+        }
+
+        return customListsMapCache;
+    }
+
+
+    // ==========================================
+    // 🛠️ UTILITAIRES
+    // ==========================================
+    function dateGapToday(date) {
+        if(!date) return;
         const dTargetClean = new Date(date);
         dTargetClean.setHours(0, 0, 0, 0);
-
         const dTodayClean = new Date();
         dTodayClean.setHours(0, 0, 0, 0);
-
         const diffTime = dTodayClean - dTargetClean;
         return Math.round(diffTime / (1000 * 60 * 60 * 24));
     }
 
+
     // ==========================================
-    // 🎨 INJECTION 1 : PAGE DE LISTE D'ANIMES
+    // 🎨 INJECTIONS DOM
     // ==========================================
+
+    // INJECTION 1 : Dates Supabase (Page de liste d'animes uniquement)
     async function processListCards() {
         const map = await fetchAllHistory();
         if (!map) return;
@@ -177,10 +257,8 @@
 
             const titleDiv = card.querySelector('.title');
             if (!titleDiv) return;
-
             const titleLink = titleDiv.querySelector('a');
             if (!titleLink) return;
-
             const match = titleLink.getAttribute('href').match(/\/anime\/(\d+)/);
             if (!match) return;
 
@@ -189,31 +267,23 @@
             if (map.has(mediaId)) {
                 const date = map.get(mediaId);
                 const dateStr = date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-
                 const daysCount = dateGapToday(date);
 
                 const iconDiv = document.createElement('div');
                 iconDiv.className = 'custom-watch-date-icon';
-                // Le CSS custom utilise cet attribut 'label' pour l'afficher !
                 iconDiv.setAttribute('label', `Terminé le ${dateStr} (${daysCount}j)`);
 
-                // SVG Bootstrap
                 iconDiv.innerHTML = `
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calendar-check-fill" viewBox="0 0 16 16">
                         <path d="M4 .5a.5.5 0 0 0-1 0V1H2a2 2 0 0 0-2 2v1h16V3a2 2 0 0 0-2-2h-1V.5a.5.5 0 0 0-1 0V1H4zM16 14V5H0v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2m-5.146-5.146-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 0 1 .708-.708L7.5 10.793l2.646-2.647a.5.5 0 0 1 .708.708"/>
                     </svg>
                 `;
-
-                // Injection DANS le bloc title
                 titleDiv.appendChild(iconDiv);
             }
         });
     }
 
-
-    // ==========================================
-    // 🎨 INJECTION 2 : PAGE DÉTAIL D'UN ANIME
-    // ==========================================
+    // INJECTION 2 : Blocs Détails (Page d'un anime)
     function injectDetailBlocks() {
         if (location.pathname !== lastPathname) {
             const oldGenres = document.getElementById('custom-quick-genres');
@@ -236,7 +306,7 @@
         const relationsBlock = document.querySelector('.relations.small') || document.querySelector('.relations');
         if (!relationsBlock) return;
 
-        // INJECTION GENRES
+        // Blocs Genres (Intact)
         if (!document.getElementById('custom-quick-genres')) {
             const typeElements = Array.from(document.querySelectorAll('.data-set.data-list .type'));
             const genresHeader = typeElements.find(el => el.textContent.trim() === 'Genres');
@@ -302,7 +372,7 @@
             }
         }
 
-        // INJECTION DATE
+        // Bloc Date (Intact)
         if (hasFetchedForCurrentMedia && !document.getElementById('custom-completion-date')) {
             const dateContainer = document.createElement('div');
             dateContainer.id = 'custom-completion-date';
@@ -327,7 +397,6 @@
 
             if (cachedCompletionDate) {
                 const cachedCompletionDateStr = cachedCompletionDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-
                 const daysCount = dateGapToday(cachedCompletionDate);
 
                 dateBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg> Terminé le ${cachedCompletionDateStr} (${daysCount}j)`;
@@ -349,21 +418,64 @@
         }
     }
 
-    // ==========================================
-    // 🔄 ROUTEUR : OÙ SOMMES-NOUS ?
-    // ==========================================
-    function routeHandler() {
-        const path = location.pathname;
-        if (path.match(/\/anime\/(\d+)/)) {
-            injectDetailBlocks();
-        } else if (path.includes('/animelist')) {
-            processListCards();
-        }
+    // INJECTION 3 : Points Listes Personnalisées (Seulement sur animelist)
+    async function processCustomListIndicators() {
+        const map = await fetchCustomLists();
+        if (!map) return;
+
+        // Ne cible plus que les '.entry-card' (cartes de liste), on ignore les '.media-card' des autres pages
+        const cards = document.querySelectorAll('.entry-card:not(.custom-lists-processed)');
+
+        cards.forEach(card => {
+            card.classList.add('custom-lists-processed');
+
+            const link = card.querySelector('a[href*="/anime/"]');
+            if (!link) return;
+
+            const href = link.getAttribute('href');
+            const match = href.match(/\/anime\/(\d+)/);
+
+            if (match && match[1]) {
+                const mediaId = parseInt(match[1], 10);
+
+                if (map.has(mediaId)) {
+                    const matchedLists = map.get(mediaId);
+
+                    matchedLists.forEach((listConfig, index) => {
+                        const dot = document.createElement('span');
+                        dot.className = 'release-status custom-list-dot';
+                        dot.title = listConfig.name;
+
+                        // Décalage pour éviter la superposition s'il y a plusieurs listes
+                        const rightOffset = -4 + (index * 16);
+
+                        dot.style.setProperty('background', listConfig.color, 'important');
+                        dot.style.setProperty('box-shadow', `0 0 5px ${listConfig.color}`, 'important');
+                        dot.style.setProperty('right', `${rightOffset}px`, 'important');
+
+                        card.appendChild(dot);
+                    });
+                }
+            }
+        });
     }
 
     // ==========================================
-    // 🔄 STRATÉGIE DE DÉTECTION SPA
+    // 🔄 ROUTEUR & DÉTECTION SPA
     // ==========================================
+    function routeHandler() {
+        const path = location.pathname;
+
+        if (path.match(/\/anime\/(\d+)/)) {
+            // Page de détail d'un anime
+            injectDetailBlocks();
+        } else if (path.includes('/animelist')) {
+            // Page de liste d'animes : On déclenche les deux fonctions ici !
+            processListCards();
+            processCustomListIndicators();
+        }
+    }
+
     const observer = new MutationObserver(() => {
         routeHandler();
     });
@@ -375,5 +487,6 @@
         setTimeout(routeHandler, 100);
     }, true);
 
+    // Premier lancement
     routeHandler();
 })();
