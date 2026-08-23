@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AniList - Tweaks
 // @namespace    http://tampermonkey.net/
-// @version      4.0
+// @version      4.1
 // @description  Ajoute des infos Supabase manquantes et des indicateurs de couleur pour les listes personnalisées
 // @author       Symswag
 // @match        https://anilist.co/*
@@ -423,7 +423,6 @@
         const map = await fetchCustomLists();
         if (!map) return;
 
-        // Ne cible plus que les '.entry-card' (cartes de liste), on ignore les '.media-card' des autres pages
         const cards = document.querySelectorAll('.entry-card:not(.custom-lists-processed)');
 
         cards.forEach(card => {
@@ -441,12 +440,16 @@
                 if (map.has(mediaId)) {
                     const matchedLists = map.get(mediaId);
 
+                    // Tableau qui va stocker toutes les ombres/bordures de la carte
+                    let cardBoxShadows = [];
+
                     matchedLists.forEach((listConfig, index) => {
+                        // --- 1. Création des POINTS ---
                         const dot = document.createElement('span');
                         dot.className = 'release-status custom-list-dot';
                         dot.title = listConfig.name;
 
-                        // Décalage pour éviter la superposition s'il y a plusieurs listes
+                        // Décalage des points (-4px, puis 12px, 28px...)
                         const rightOffset = -4 + (index * 16);
 
                         dot.style.setProperty('background', listConfig.color, 'important');
@@ -454,11 +457,34 @@
                         dot.style.setProperty('right', `${rightOffset}px`, 'important');
 
                         card.appendChild(dot);
+
+                        // --- 2. Création des BORDURES MULTIPLES (via box-shadow) ---
+                        // index 0 = 1px, index 1 = 2px, index 2 = 3px...
+                        const borderThickness = index + 1;
+                        const glowSpread = index; // Le halo s'étend de plus en plus
+
+                        // On ajoute une "fausse bordure" très nette (0px de flou)
+                        cardBoxShadows.push(`0 0 0 ${borderThickness}px ${listConfig.color}`);
+                        // On ajoute un effet de halo (glow) autour (5px de flou)
+                        cardBoxShadows.push(`0 0 5px ${glowSpread}px ${listConfig.color}`);
                     });
+
+                    // --- 3. Application des styles sur la CARTE ---
+                    // On fusionne toutes les ombres avec des virgules
+                    const finalShadow = cardBoxShadows.join(', ');
+
+                    // On ajoute une bordure transparente pour éviter que l'image ne se décale
+                    card.style.setProperty('border', '1px solid transparent', 'important');
+                    // On applique notre méga-ombre multicouches
+                    card.style.setProperty('box-shadow', finalShadow, 'important');
+
+                    // Optionnel : Arrondir très légèrement la carte pour que l'ombre épouse bien les bords
+                    card.style.setProperty('border-radius', '4px', 'important');
                 }
             }
         });
     }
+
 
     // ==========================================
     // 🔄 ROUTEUR & DÉTECTION SPA
