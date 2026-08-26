@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AniList - Tweaks & Custom Indicators
 // @namespace    http://tampermonkey.net/
-// @version      5.0.1
+// @version      5.0.2
 // @description  Supabase infos, Points/Bordures de listes, et Système de notifications Anti-Spam
 // @author       Symswag
 // @match        https://anilist.co/*
@@ -324,9 +324,13 @@
                 {
                     iconDiv.style.color = "#FF8000";
                 }
-                else
+                else if (daysCount <= 365)
                 {
                     iconDiv.style.color = "#FF0032";
+                }
+                else
+                {
+                    iconDiv.style.color = "#000000"
                 }
 
                 titleDiv.appendChild(iconDiv);
