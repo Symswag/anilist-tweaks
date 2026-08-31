@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AniList - Tweaks & Custom Indicators
 // @namespace    http://tampermonkey.net/
-// @version      5.0.2
+// @version      5.0.3
 // @description  Supabase infos, Points/Bordures de listes, et Système de notifications Anti-Spam
 // @author       Symswag
 // @match        https://anilist.co/*
@@ -318,15 +318,23 @@
 
                 if (daysCount <= 30)
                 {
-                    iconDiv.style.color = "#00FF00";
+                    iconDiv.style.color = "#00ffff";
                 }
-                else if (daysCount <= 100)
+                else if (daysCount <= 90)
                 {
-                    iconDiv.style.color = "#FF8000";
+                    iconDiv.style.color = "#00ff00";
+                }
+                else if (daysCount <= 180)
+                {
+                    iconDiv.style.color = "#ffff00";
+                }
+                else if (daysCount <= 270)
+                {
+                    iconDiv.style.color = "#ff8000";
                 }
                 else if (daysCount <= 365)
                 {
-                    iconDiv.style.color = "#FF0032";
+                    iconDiv.style.color = "#FF0032"
                 }
                 else
                 {
