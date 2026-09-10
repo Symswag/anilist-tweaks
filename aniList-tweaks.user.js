@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AniList - Tweaks & Custom Indicators
 // @namespace    http://tampermonkey.net/
-// @version      5.0.3
+// @version      5.0.4
 // @description  Supabase infos, Points/Bordures de listes, et Système de notifications Anti-Spam
 // @author       Symswag
 // @match        https://anilist.co/*
@@ -17,11 +17,11 @@
     // 🔧 CONFIGURATION GÉNÉRALE
     // ==========================================
     
-    const SUPABASE_URL = 'https://skyhgrptdxggbxzuxmay.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_oI0jegev2Vx-coWpXmUw7Q_hBs-RWsw';
+    const SUPABASE_URL = 'SUPABASE_URL';
+    const SUPABASE_ANON_KEY = 'SUPABASE_ANON_KEY';
     const TABLE_NAME = 'anime_history';
 
-    const ANILIST_USERNAME = "Symswag";
+    const ANILIST_USERNAME = "ANILIST_USERNAME";
     const NOTIFICATION_LIST_NAME = "Not Yet"; // Nom exact de la liste pour les notifications
     const LISTS_CONFIG = [
         { name: "VF Supremacy", color: "#00ffff" },
@@ -68,12 +68,14 @@
         .custom-toast { display: flex; background: rgb(var(--color-foreground)); padding: 12px; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); width: 340px; text-decoration: none !important; color: inherit; position: relative; pointer-events: auto; transition: transform 0.2s; }
         .custom-toast:hover { transform: translateY(-3px); }
         .custom-toast.green { border-left: 5px solid rgb(var(--color-green)); }
+        .custom-toast.yellow { border-left: 5px solid rgb(var(--color-yellow)); }
         .custom-toast.orange { border-left: 5px solid rgb(var(--color-orange)); }
         .toast-cover { width: 48px; height: 68px; object-fit: cover; border-radius: 4px; margin-right: 12px; }
         .toast-content { display: flex; flex-direction: column; justify-content: center; flex: 1; padding-right: 15px; }
         .toast-title { font-size: 1.2rem; font-weight: 700; color: rgb(var(--color-text)); margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; }
         .toast-msg { font-size: 1.1rem; color: rgb(var(--color-text-lighter)); font-weight: 600; }
         .custom-toast.green .toast-msg { color: rgb(var(--color-green)); }
+        .custom-toast.yellow .toast-msg { color: rgb(var(--color-yellow)); }
         .custom-toast.orange .toast-msg { color: rgb(var(--color-orange)); }
         .toast-close { position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: bold; color: rgb(var(--color-text-lighter)); background: rgba(0,0,0,0.1); border-radius: 50%; cursor: pointer; transition: background 0.2s, color 0.2s; }
         .toast-close:hover { color: rgb(var(--color-red)); background: rgba(0,0,0,0.2); }
@@ -196,9 +198,16 @@
                 type = 'GREEN';
                 msg = `Est complètement sorti !`;
             } 
-            // Règle Orange : En cours + C'est le dernier épisode + Sort dans moins de 24h (86400s)
             else if (media.status === 'RELEASING' && media.nextAiringEpisode) {
-                if (media.nextAiringEpisode.episode === media.episodes && media.nextAiringEpisode.timeUntilAiring <= 86400) {
+                // Règle Jaune : En cours + C'est le dernier épisode + Sort dans moins de 6h (21600s)
+                if (media.nextAiringEpisode.episode === media.episodes && media.nextAiringEpisode.timeUntilAiring <= 21600) {
+                    type = 'YELLOW';
+                    const h = Math.floor(media.nextAiringEpisode.timeUntilAiring / 3600);
+                    const m = Math.floor((media.nextAiringEpisode.timeUntilAiring % 3600) / 60);
+                    msg = `Dernier épisode dans ${h}h ${m}min !`;
+                }                
+                // Règle Orange : En cours + C'est le dernier épisode + Sort dans moins de 24h (86400s)
+                else if (media.nextAiringEpisode.episode === media.episodes && media.nextAiringEpisode.timeUntilAiring <= 86400) {
                     type = 'ORANGE';
                     const h = Math.floor(media.nextAiringEpisode.timeUntilAiring / 3600);
                     const m = Math.floor((media.nextAiringEpisode.timeUntilAiring % 3600) / 60);
@@ -210,7 +219,8 @@
                 // Vérification anti-spam
                 const pastStatus = dismissed[id];
                 if (pastStatus === 'GREEN') return; // Déjà vu en vert, on ignore
-                if (pastStatus === 'ORANGE' && type === 'ORANGE') return; // Déjà vu en orange, on ignore (jusqu'à ce qu'il passe vert)
+                if (pastStatus === 'YELLOW' && type === 'YELLOW') return; // Déjà vu en yellow, on ignore (jusqu'à ce qu'il passe vert)
+                if (pastStatus === 'ORANGE' && type === 'ORANGE') return; // Déjà vu en orange, on ignore (jusqu'à ce qu'il passe yellow)
 
                 notificationQueue.push({ 
                     id: id, 
