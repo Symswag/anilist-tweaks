@@ -1,0 +1,53 @@
+{
+  "manifest_version": 3,
+  "name": "AniList Tweaks",
+  "version": "6.5.0",
+  "description": "Améliorations AniList, Automatisation MalSync, Sync Vidéo, Plateformes, Navigation et Boutons de Recherche.",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "<all_urls>",
+    "*://*.supabase.co/*"
+  ],
+  "icons": {
+    "128": "assets/LogoAnilistTweaks.png"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "128": "assets/LogoAnilistTweaks.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["scripts/malsync/content-malsync.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["*://anilist.co/*"],
+      "js": ["scripts/anilist/content-anilist.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["scripts/content-video-sync.js"],
+      "run_at": "document_idle",
+      "all_frames": true
+    },
+    {
+      "matches": ["*://anilist.co/*"],
+      "js": ["scripts/anilist/content-streaming.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["*://anilist.co/*"],
+      "js": ["scripts/anilist/content-nav.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://anilist.co/*"],
+      "js": ["scripts/anilist/content-search.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
