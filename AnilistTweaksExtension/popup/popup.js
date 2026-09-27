@@ -56,6 +56,7 @@ function saveAnilistOptions() {
         tableName: document.getElementById('tableName').value,
         anilistUsername: document.getElementById('anilistUsername').value,
         notifList: document.getElementById('notifList').value,
+        spinnerDuration: parseInt(document.getElementById('spinnerDuration').value, 10),
         listsConfig: JSON.stringify(listsConfigArray)
     }, function() {
         const status = document.getElementById('status');
@@ -67,13 +68,14 @@ function saveAnilistOptions() {
 function restoreAnilistOptions() {
     chrome.storage.sync.get({
         supabaseUrl: '', supabaseKey: '', tableName: 'anime_history', anilistUsername: 'Symswag',
-        notifList: 'Not Yet', listsConfig: '[{"name": "VF Supremacy", "color": "#00ffff"}]'
+        notifList: 'Not Yet', listsConfig: '[{"name": "VF Supremacy", "color": "#00ffff"}]', spinnerDuration: 3
     }, function(items) {
         document.getElementById('supabaseUrl').value = items.supabaseUrl;
         document.getElementById('supabaseKey').value = items.supabaseKey;
         document.getElementById('tableName').value = items.tableName;
         document.getElementById('anilistUsername').value = items.anilistUsername;
         document.getElementById('notifList').value = items.notifList;
+        document.getElementById('spinnerDuration').value = items.spinnerDuration;
         listsContainer.innerHTML = '';
         try {
             const parsedLists = JSON.parse(items.listsConfig);

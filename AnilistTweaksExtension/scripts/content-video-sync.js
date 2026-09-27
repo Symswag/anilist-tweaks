@@ -10,7 +10,8 @@
         supabaseUrl: '',
         supabaseKey: '',
         tableName: 'anime_history',
-        anilistUsername: 'Symswag'
+        anilistUsername: 'Symswag',
+        spinnerDuration: 3
     }, function(config) {
         
         const SUPABASE_URL = config.supabaseUrl;
@@ -21,14 +22,16 @@
         // Si les identifiants Supabase ne sont pas configurés, on stoppe tout
         if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
 
-        const TRIGGER_PERCENTAGE = 92;
+        const spinnerDuration = config.spinnerDuration || 3; // Durée du spinner en secondes
+        const TRIGGER_PERCENTAGE = 91;
         const PROGRESS_COLOR = "#00FFFF";
         const FINISH_COLOR = "#3ECF8E";
 
         const SUPPORTED_SITES = [
             { name: 'Crunchyroll', domain: 'crunchyroll.com', videoSelector: 'video' },
             { name: 'ADN', domain: 'animationdigitalnetwork.com', videoSelector: 'video' },
-            { name: 'voir-anime', domain: 'voir-anime.to', videoSelector: 'video', isIframe: true }
+            { name: 'Voir-anime', domain: 'voir-anime.to', videoSelector: 'video', isIframe: true },
+            { name: 'Anime-Sama', domain: 'anime-sama.to', videoSelector: 'video', isIframe: true },
         ];
 
         const style = document.createElement('style');
@@ -52,7 +55,7 @@
                         <circle class="ad-spinner-bg" cx="25" cy="25" r="20"></circle>
                         <circle class="ad-spinner-progress" cx="25" cy="25" r="20"></circle>
                     </svg>
-                    <span id="ad-countdown-number">5</span>
+                    <span id="ad-countdown-number">${spinnerDuration}</span>
                 `;
 
                 let videoWrapper = videoElement.closest('[data-testid="vilos-player"]') || videoElement.parentNode;
@@ -65,7 +68,7 @@
             const progressCircle = cd.querySelector('.ad-spinner-progress');
             const countdownSpan = cd.querySelector('#ad-countdown-number');
             const totalLength = 126;
-            let timeLeft = 5;
+            let timeLeft = spinnerDuration;
 
             countdownSpan.innerText = timeLeft;
             countdownSpan.style.color = PROGRESS_COLOR;
@@ -78,7 +81,7 @@
 
                 if (timeLeft > 0) {
                     countdownSpan.innerText = timeLeft;
-                    const offset = totalLength * (1 - timeLeft / 5);
+                    const offset = totalLength * (1 - timeLeft / spinnerDuration);
                     progressCircle.style.strokeDashoffset = offset;
                 } else {
                     clearInterval(interval);
