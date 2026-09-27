@@ -38,7 +38,7 @@
         
         let notificationQueue = [];
         let activeToasts = 0;
-        const MAX_TOASTS = 3;
+        const MAX_TOASTS = 5;
 
         const style = document.createElement('style');
         style.innerHTML = `
@@ -165,6 +165,25 @@
             let dismissed = JSON.parse(localStorage.getItem('anilist_notifs_dismissed') || '{}');
             const todayStr = new Date().toDateString();
 
+            // --- NOUVEAUTÉ : GARBAGE COLLECTOR ---
+            // On récupère tous les IDs valides actuellement dans la liste
+            const validIds = new Set(notYetList.entries.map(entry => entry.media.id));
+            let dismissedChanged = false;
+
+            // On supprime les vieux IDs de la mémoire locale s'ils ne sont plus dans la liste "Not Yet"
+            Object.keys(dismissed).forEach(key => {
+                if (!validIds.has(parseInt(key, 10))) {
+                    delete dismissed[key];
+                    dismissedChanged = true;
+                }
+            });
+
+            // Sauvegarde uniquement si on a nettoyé quelque chose
+            if (dismissedChanged) {
+                localStorage.setItem('anilist_notifs_dismissed', JSON.stringify(dismissed));
+            }
+            // -------------------------------------
+
             notYetList.entries.forEach(entry => {
                 const media = entry.media;
                 const id = media.id;
@@ -234,10 +253,9 @@
             displayNextToasts();
         }
 
-        // Fonction centralisée pour animer et supprimer un toast
         function closeToastElement(toastEl) {
             if (toastEl.dataset.closing) return;
-            toastEl.dataset.closing = "true"; // Empêche les multiples fermetures simultanées
+            toastEl.dataset.closing = "true"; 
             toastEl.style.transition = 'opacity 0.3s, transform 0.3s';
             toastEl.style.opacity = '0';
             toastEl.style.transform = 'translateX(50px)';
@@ -257,7 +275,6 @@
             while(activeToasts < MAX_TOASTS && notificationQueue.length > 0) {
                 const notif = notificationQueue.shift();
                 
-                // Sécurité : Vérifie si la notif n'a pas été fermée par un autre onglet juste avant d'apparaître
                 const dismissed = JSON.parse(localStorage.getItem('anilist_notifs_dismissed') || '{}');
                 const pastData = dismissed[notif.id];
                 if (pastData && new Date(pastData.timestamp).toDateString() === new Date().toDateString() && pastData.type === notif.type) {
@@ -268,7 +285,7 @@
 
                 const toast = document.createElement('a');
                 toast.href = `/anime/${notif.id}`; toast.className = `custom-toast ${notif.type.toLowerCase()}`;
-                toast.dataset.type = notif.type; // Stocke le type pour la vérification cross-tab
+                toast.dataset.type = notif.type; 
                 toast.innerHTML = `<img class="toast-cover" src="${notif.cover}" /><div class="toast-content"><div class="toast-title">${notif.title}</div><div class="toast-msg">${notif.msg}</div></div><div class="toast-close" title="Fermer">×</div>`;
 
                 toast.querySelector('.toast-close').addEventListener('click', (e) => {
@@ -286,13 +303,11 @@
             }
         }
 
-        // --- NOUVEAUTÉ : Écouteur de synchronisation inter-onglets ---
         window.addEventListener('storage', (e) => {
             if (e.key === 'anilist_notifs_dismissed') {
                 const dismissed = JSON.parse(e.newValue || '{}');
                 const todayStr = new Date().toDateString();
 
-                // 1. Fermer les toasts actuellement affichés à l'écran
                 const activeToastEls = document.querySelectorAll('.custom-toast');
                 activeToastEls.forEach(toastEl => {
                     const match = toastEl.getAttribute('href').match(/\/anime\/(\d+)/);
@@ -304,7 +319,6 @@
                             const pastType = pastData.type;
                             const pastDate = new Date(pastData.timestamp).toDateString();
                             
-                            // Si la notif a été fermée aujourd'hui avec le même type depuis un autre onglet
                             if (pastDate === todayStr && toastEl.dataset.type === pastType) {
                                 closeToastElement(toastEl);
                             }
@@ -312,13 +326,12 @@
                     }
                 });
 
-                // 2. Nettoyer la file d'attente pour éviter qu'elle n'apparaisse plus tard
                 notificationQueue = notificationQueue.filter(notif => {
                     const pastData = dismissed[notif.id];
                     if (pastData) {
                         const pastDate = new Date(pastData.timestamp).toDateString();
                         if (pastDate === todayStr && pastData.type === notif.type) {
-                            return false; // Supprimer de la file
+                            return false; 
                         }
                     }
                     return true;

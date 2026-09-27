@@ -27,6 +27,7 @@
 
         const SUPPORTED_SITES = [
             { name: 'Crunchyroll', domain: 'crunchyroll.com', videoSelector: 'video' },
+            { name: 'ADN', domain: 'animationdigitalnetwork.com', videoSelector: 'video' },
             { name: 'voir-anime', domain: 'voir-anime.to', videoSelector: 'video', isIframe: true }
         ];
 
