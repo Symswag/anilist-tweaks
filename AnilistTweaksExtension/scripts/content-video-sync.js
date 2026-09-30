@@ -40,7 +40,7 @@
             #ad-countdown-overlay.ad-show { opacity: 1; visibility: visible; transform: scale(1); }
             .ad-spinner { position: absolute; width: 100%; height: 100%; transform: rotate(-90deg); }
             .ad-spinner-bg { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 4; }
-            .ad-spinner-progress { fill: none; stroke: #00ffff; stroke-width: 4; stroke-linecap: round; stroke-dasharray: 126; stroke-dashoffset: 0; transition: stroke-dashoffset 0.2s linear; }
+            .ad-spinner-progress { fill: none; stroke: #00ffff; stroke-width: 4; stroke-linecap: round; stroke-dasharray: 126; stroke-dashoffset: 0; transition: stroke-dashoffset 3s linear; }
             #ad-countdown-number { color: #00ffff; font-size: 18px; font-weight: bold; font-family: "Segoe UI", Roboto, sans-serif; z-index: 2; background: transparent !important; box-shadow: none !important; border: none !important; }
         `;
         document.head.appendChild(style);
@@ -67,26 +67,42 @@
 
             const progressCircle = cd.querySelector('.ad-spinner-progress');
             const countdownSpan = cd.querySelector('#ad-countdown-number');
-            const totalLength = 126;
+            const totalLength = 2 * Math.PI * 20; // ~125.66px
             let timeLeft = spinnerDuration;
 
             countdownSpan.innerText = timeLeft;
             countdownSpan.style.color = PROGRESS_COLOR;
             progressCircle.style.stroke = PROGRESS_COLOR;
+
+            // Définition de la longueur du trait
+            progressCircle.style.strokeDasharray = totalLength;
+
+            // 1. Réinitialisation instantanée du cercle plein
+            progressCircle.style.transition = 'none';
             progressCircle.style.strokeDashoffset = 0;
+
+            // 2. Force le navigateur à appliquer la réinitialisation (reflow)
+            void progressCircle.getBoundingClientRect();
+
+            // 3. Lancement de la transition pour vider le cercle sur toute la durée
+            progressCircle.style.transition = `stroke-dashoffset ${spinnerDuration}s linear`;
+            progressCircle.style.strokeDashoffset = totalLength;
+
             cd.classList.add('ad-show');
 
             const interval = setInterval(() => {
                 timeLeft--;
-
-                if (timeLeft > 0) {
+                if (timeLeft >= 0) {
                     countdownSpan.innerText = timeLeft;
-                    const offset = totalLength * (1 - timeLeft / spinnerDuration);
-                    progressCircle.style.strokeDashoffset = offset;
-                } else {
+                }
+
+                if (timeLeft <= 0) {
                     clearInterval(interval);
                     countdownSpan.innerText = "✓";
                     countdownSpan.style.color = FINISH_COLOR;
+                    
+                    // Animation de fin
+                    progressCircle.style.transition = 'stroke-dashoffset 0.5s linear, stroke 0.5s linear';
                     progressCircle.style.strokeDashoffset = 0;
                     progressCircle.style.stroke = FINISH_COLOR;
 
