@@ -40,6 +40,10 @@
         let activeToasts = 0;
         const MAX_TOASTS = 5;
 
+        let cachedRewatchCount = 0;
+        let hasFetchedAnilistData = false;
+        let isFetchingAnilistData = false;
+
         const style = document.createElement('style');
         style.innerHTML = `
             .entry-card .title { overflow: visible !important; }
@@ -85,6 +89,36 @@
                 hasFetchedForCurrentMedia = true;
                 isFetchingSingle = false;
                 injectDetailBlocks();
+            }
+        }
+
+        async function fetchAnilistEntryData(mediaId) {
+            if (isFetchingAnilistData || hasFetchedAnilistData) return;
+            isFetchingAnilistData = true;
+            try {
+                const query = `
+                query ($mediaId: Int, $userName: String) {
+                  MediaList(mediaId: $mediaId, userName: $userName) { repeat }
+                }`;
+                const variables = { mediaId: parseInt(mediaId), userName: ANILIST_USERNAME };
+                
+                const res = await fetch('https://graphql.anilist.co', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ query, variables })
+                });
+                const data = await res.json();
+                if (data && data.data && data.data.MediaList) {
+                    cachedRewatchCount = data.data.MediaList.repeat || 0;
+                } else {
+                    cachedRewatchCount = 0;
+                }
+            } catch (err) {
+                cachedRewatchCount = 0;
+            } finally {
+                hasFetchedAnilistData = true;
+                isFetchingAnilistData = false;
+                injectDetailBlocks(); // Relance l'injection une fois la donnée reçue
             }
         }
 
@@ -396,18 +430,27 @@
                 const oldGenres = document.getElementById('custom-quick-genres');
                 const oldDate = document.getElementById('custom-completion-date');
                 if (oldGenres) oldGenres.remove(); if (oldDate) oldDate.remove();
-                lastPathname = location.pathname; hasFetchedForCurrentMedia = false; cachedCompletionDate = null;
+                
+                // On réinitialise tout au changement de page
+                lastPathname = location.pathname; 
+                hasFetchedForCurrentMedia = false; 
+                cachedCompletionDate = null;
+                hasFetchedAnilistData = false;
+                cachedRewatchCount = 0;
             }
 
             const match = location.pathname.match(/\/anime\/(\d+)/);
             if (!match) return;
             const mediaId = match[1];
 
+            // On lance les deux requêtes en parallèle si ce n'est pas déjà fait
             if (!hasFetchedForCurrentMedia) fetchSingleCompletionDate(mediaId);
+            if (!hasFetchedAnilistData) fetchAnilistEntryData(mediaId);
 
             const relationsBlock = document.querySelector('.relations.small') || document.querySelector('.relations');
             if (!relationsBlock) return;
 
+            // --- 1. SECTION GENRES ---
             if (!document.getElementById('custom-quick-genres')) {
                 const typeElements = Array.from(document.querySelectorAll('.data-set.data-list .type'));
                 const genresHeader = typeElements.find(el => el.textContent.trim() === 'Genres');
@@ -435,24 +478,74 @@
                 }
             }
 
-            if (hasFetchedForCurrentMedia && !document.getElementById('custom-completion-date')) {
-                const dateContainer = document.createElement('div'); dateContainer.id = 'custom-completion-date'; dateContainer.style.marginBottom = '25px';
-                const dateTitle = document.createElement('h2'); dateTitle.textContent = 'Visionnage'; dateTitle.style.fontSize = '1.4rem'; dateTitle.style.fontWeight = '700'; dateTitle.style.letterSpacing = '0.03em'; dateTitle.style.marginBottom = '12px'; dateTitle.style.color = 'var(--color-text-main)';
+            // --- 2. SECTION VISIONNAGE (DATE & REWATCH) ---
+            // On s'assure que les 2 appels réseau sont terminés avant de créer le bloc
+            if (hasFetchedForCurrentMedia && hasFetchedAnilistData && !document.getElementById('custom-completion-date')) {
+                const dateContainer = document.createElement('div'); 
+                dateContainer.id = 'custom-completion-date'; 
+                dateContainer.style.marginBottom = '25px';
+                
+                const dateTitle = document.createElement('h2'); 
+                dateTitle.textContent = 'Visionnage'; 
+                dateTitle.style.fontSize = '1.4rem'; 
+                dateTitle.style.fontWeight = '700'; 
+                dateTitle.style.letterSpacing = '0.03em'; 
+                dateTitle.style.marginBottom = '12px'; 
+                dateTitle.style.color = 'var(--color-text-main)';
                 dateContainer.appendChild(dateTitle);
-                const dateBadge = document.createElement('div'); dateBadge.style.display = 'inline-flex'; dateBadge.style.alignItems = 'center'; dateBadge.style.padding = '8px 16px'; dateBadge.style.borderRadius = '6px'; dateBadge.style.fontSize = '1.3rem'; dateBadge.style.fontWeight = '600';
+
+                const badgeWrapper = document.createElement('div');
+                badgeWrapper.style.display = 'flex';
+                badgeWrapper.style.gap = '10px';
+                badgeWrapper.style.flexWrap = 'wrap';
+
+                // Badge 1 : Date
+                const dateBadge = document.createElement('div'); 
+                dateBadge.style.display = 'inline-flex'; 
+                dateBadge.style.alignItems = 'center'; 
+                dateBadge.style.padding = '8px 16px'; 
+                dateBadge.style.borderRadius = '6px'; 
+                dateBadge.style.fontSize = '1.3rem'; 
+                dateBadge.style.fontWeight = '600';
 
                 if (cachedCompletionDate) {
                     const cachedCompletionDateStr = cachedCompletionDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
                     const daysCount = dateGapToday(cachedCompletionDate);
                     dateBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg> Terminé le ${cachedCompletionDateStr} (${daysCount}j)`;
-                    dateBadge.style.backgroundColor = 'rgba(62, 207, 142, 0.1)'; dateBadge.style.color = '#3ECF8E';
+                    dateBadge.style.backgroundColor = 'rgba(62, 207, 142, 0.1)'; 
+                    dateBadge.style.color = '#3ECF8E';
                 } else {
                     dateBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg> Date pas encore enregistrée`;
-                    dateBadge.style.backgroundColor = 'rgba(225, 51, 51, 0.1)'; dateBadge.style.color = '#e13333';
+                    dateBadge.style.backgroundColor = 'rgba(225, 51, 51, 0.1)'; 
+                    dateBadge.style.color = '#e13333';
                 }
-                dateContainer.appendChild(dateBadge);
+                badgeWrapper.appendChild(dateBadge);
+
+                // Badge 2 : Rewatch (Utilisation de la variable GraphQL)
+                if (cachedRewatchCount > 0) {
+                    const rewatchBadge = document.createElement('div');
+                    rewatchBadge.style.display = 'inline-flex';
+                    rewatchBadge.style.alignItems = 'center';
+                    rewatchBadge.style.padding = '8px 16px';
+                    rewatchBadge.style.borderRadius = '6px';
+                    rewatchBadge.style.fontSize = '1.3rem';
+                    rewatchBadge.style.fontWeight = '600';
+                    rewatchBadge.style.backgroundColor = 'rgba(156, 39, 176, 0.1)'; 
+                    rewatchBadge.style.color = '#c253d6'; 
+                    
+                    rewatchBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg> ${cachedRewatchCount} Rewatch${cachedRewatchCount > 1 ? 's' : ''}`;
+                    
+                    badgeWrapper.appendChild(rewatchBadge);
+                }
+
+                dateContainer.appendChild(badgeWrapper);
+
                 const genresBlock = document.getElementById('custom-quick-genres');
-                if (genresBlock) { genresBlock.parentNode.insertBefore(dateContainer, genresBlock); } else { relationsBlock.parentNode.insertBefore(dateContainer, relationsBlock); }
+                if (genresBlock) { 
+                    genresBlock.parentNode.insertBefore(dateContainer, genresBlock); 
+                } else { 
+                    relationsBlock.parentNode.insertBefore(dateContainer, relationsBlock); 
+                }
             }
         }
 

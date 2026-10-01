@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AniList Tweaks",
-  "version": "6.5.9",
+  "version": "6.5.10",
   "description": "Améliorations AniList, Automatisation MalSync, Sync Vidéo, Plateformes, Navigation et Boutons de Recherche.",
   "permissions": ["storage"],
   "host_permissions": [
