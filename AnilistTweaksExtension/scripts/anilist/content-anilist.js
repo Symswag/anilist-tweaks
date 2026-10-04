@@ -46,9 +46,11 @@
 
         const style = document.createElement('style');
         style.innerHTML = `
-            .entry-card .title { overflow: visible !important; }
-            .custom-watch-date-icon { position: absolute; bottom: 100%; margin-bottom: 5px; left: 5px; color: rgba(255, 255, 255, 0.95); z-index: 10; cursor: pointer; transition: color 0.2s, transform 0.2s; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.9)); width: 28px; height: 28px; display:flex; justify-content: center; align-items: center; background-color: rgba(255, 255, 255, 0.4); backdrop-filter: blur(8px); border-radius: 5px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); }
-            .custom-watch-date-icon:hover { color: #ffffff; transform: scale(1.1); }
+            .entry-card .title { overflow: visible !important; z-index: 60 !important; }
+            .entry-card .score { z-index: 61 !important; }
+            .entry-card .progress { z-index: 61 !important; }
+            .custom-watch-date-icon { position: absolute; bottom: 100%; margin-bottom: 5px; left: 5px; color: rgba(255, 255, 255, 0.95); z-index: 50 !important; cursor: pointer; transition: color 0.2s, transform 0.2s; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.9)); width: 28px; height: 28px; display:flex; justify-content: center; align-items: center; background-color: rgba(255, 255, 255, 0.4); backdrop-filter: blur(8px); border-radius: 5px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); }
+            .custom-watch-date-icon:hover { color: #ffffff; transform: scale(1.1); z-index: 100 !important; }
             .custom-watch-date-icon::after { content: attr(label); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%) translateY(5px); background: #11161d; color: #9fadbd; padding: 8px 12px; border-radius: 4px; font-size: 1.2rem; font-weight: 600; font-family: Overpass, sans-serif; white-space: nowrap; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity 0.2s, transform 0.2s; box-shadow: 0 2px 10px rgba(0,0,0,0.4); z-index: 9999; }
             .custom-watch-date-icon:hover::after { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(-5px); }
             span.release-status.custom-list-dot { opacity: 1 !important; left: auto !important; top: -4px !important; width: 11px !important; height: 11px !important; border-radius: 50% !important; z-index: 50 !important; pointer-events: auto !important; }
@@ -69,6 +71,99 @@
             .custom-toast.red .toast-msg { color: rgb(var(--color-red)); }
             .toast-close { position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: bold; color: rgb(var(--color-text-lighter)); background: rgba(0,0,0,0.1); border-radius: 50%; cursor: pointer; transition: background 0.2s, color 0.2s; }
             .toast-close:hover { color: rgb(var(--color-red)); background: rgba(0,0,0,0.2); }
+
+            /* --- STYLE GLASSMORPHISM ET POSITIONNEMENT --- */
+            .entry-card .hover-icon.repeat,
+            .entry-card .hover-icon.notes {
+                position: absolute !important;
+                top: 5px !important;
+                left: 5px !important; /* Position par défaut (1er) */
+                z-index: 20 !important;
+                
+                display: inline-flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                width: 28px !important;
+                height: 28px !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                
+                background-color: rgba(255, 255, 255, 0.4) !important;
+                backdrop-filter: blur(8px) !important;
+                border-radius: 5px !important;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+                filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.9)) !important;
+                transition: color 0.2s, transform 0.2s, background-color 0.2s, left 0.2s !important;
+            }
+
+            /* LA NOUVELLE MAGIE : Si la carte contient 'notes', on décale 'repeat' à la 2ème place */
+            .entry-card:has(.hover-icon.notes) .hover-icon.repeat {
+                left: 38px !important; 
+            }
+
+            /* Couleurs distinctes pour les icônes */
+            .entry-card .hover-icon.repeat {
+                color: #c253d6 !important; /* Rose/Violet */
+            }
+            .entry-card .hover-icon.notes {
+                color: #3db4f2 !important; /* Bleu */
+            }
+
+            /* Ajustement parfait des SVG au centre du carré */
+            .entry-card .hover-icon.repeat svg,
+            .entry-card .hover-icon.notes svg {
+                width: 16px !important;
+                height: 16px !important;
+                margin: 0 !important;
+                fill: currentColor !important;
+                position: static !important;
+                transform: none !important;
+            }
+
+            /* Effet de zoom et d'éclaircissement au survol */
+            .entry-card .hover-icon.repeat:hover,
+            .entry-card .hover-icon.notes:hover {
+                transform: scale(1.1) !important;
+                background-color: rgba(255, 255, 255, 0.6) !important;
+            }
+
+            /* --- RE-STYLAGE ET ANIMATION DU TOOLTIP NATIF D'ANILIST --- */
+            .hover-icon-tooltip {
+                background: #11161d !important;
+                color: #9fadbd !important;
+                padding: 10px 10px 6px 10px !important; /* Un peu plus de padding en bas qu'en haut */
+                border-radius: 4px !important;
+                font-size: 1.2rem !important;
+                font-weight: 600 !important;
+                font-family: Overpass, sans-serif !important;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.4) !important;
+                border: none !important;
+                white-space: nowrap !important;
+                z-index: 9999 !important;
+                
+                /* Centrage vertical absolu */
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                box-sizing: border-box !important;
+
+                /* Moteur d'animation (axe X) */
+                transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease !important;
+            }
+
+            /* État inactif */
+            .hover-icon-tooltip[style*="visibility: hidden"] {
+                opacity: 0 !important;
+                transform: translateX(-10px) !important; 
+                visibility: hidden !important; 
+            }
+
+            /* État actif */
+            .hover-icon-tooltip[style*="visibility: visible"] {
+                opacity: 1 !important;
+                transform: translateX(0px) !important; 
+                visibility: visible !important;
+            }
         `;
         document.head.appendChild(style);
 
