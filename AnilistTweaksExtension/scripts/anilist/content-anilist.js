@@ -49,10 +49,24 @@
             .entry-card .title { overflow: visible !important; z-index: 60 !important; }
             .entry-card .score { z-index: 61 !important; }
             .entry-card .progress { z-index: 61 !important; }
+            
             .custom-watch-date-icon { position: absolute; bottom: 100%; margin-bottom: 5px; left: 5px; color: rgba(255, 255, 255, 0.95); z-index: 50 !important; cursor: pointer; transition: color 0.2s, transform 0.2s; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.9)); width: 28px; height: 28px; display:flex; justify-content: center; align-items: center; background-color: rgba(255, 255, 255, 0.4); backdrop-filter: blur(8px); border-radius: 5px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); }
             .custom-watch-date-icon:hover { color: #ffffff; transform: scale(1.1); z-index: 100 !important; }
             .custom-watch-date-icon::after { content: attr(label); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%) translateY(5px); background: #11161d; color: #9fadbd; padding: 8px 12px; border-radius: 4px; font-size: 1.2rem; font-weight: 600; font-family: Overpass, sans-serif; white-space: nowrap; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity 0.2s, transform 0.2s; box-shadow: 0 2px 10px rgba(0,0,0,0.4); z-index: 9999; }
             .custom-watch-date-icon:hover::after { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(-5px); }
+            .custom-watch-date-icon.cyan { color: #00ffff; background-color: rgba(0, 255, 255, 0.3); }
+            .custom-watch-date-icon.cyan:hover { background-color: rgba(0, 255, 255, 0.4); }
+            .custom-watch-date-icon.green { color: #00ff00; background-color: rgba(0, 255, 0, 0.3); }
+            .custom-watch-date-icon.green:hover { background-color: rgba(0, 255, 0, 0.4); }
+            .custom-watch-date-icon.yellow { color: #ffff00; background-color: rgba(255, 255, 0, 0.3); }
+            .custom-watch-date-icon.yellow:hover { background-color: rgba(255, 255, 0, 0.4); }
+            .custom-watch-date-icon.orange { color: #ff8000; background-color: rgba(255, 128, 0, 0.3); }
+            .custom-watch-date-icon.orange:hover { background-color: rgba(255, 128, 0, 0.4); }
+            .custom-watch-date-icon.red { color: #FF0032; background-color: rgba(255, 0, 50, 0.3); }
+            .custom-watch-date-icon.red:hover { background-color: rgba(255, 0, 50, 0.4); }
+            .custom-watch-date-icon.black { color: #000000; background-color: rgba(0, 0, 0, 0.2); }
+            .custom-watch-date-icon.black:hover { background-color: rgba(0, 0, 0, 0.3); }
+            
             span.release-status.custom-list-dot { opacity: 1 !important; left: auto !important; top: -4px !important; width: 11px !important; height: 11px !important; border-radius: 50% !important; z-index: 50 !important; pointer-events: auto !important; }
             #custom-toast-container { position: fixed; bottom: 30px; right: 30px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
             .custom-toast { display: flex; background: rgb(var(--color-foreground)); padding: 12px; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); width: 340px; text-decoration: none !important; color: inherit; position: relative; pointer-events: auto; transition: transform 0.2s; }
@@ -103,10 +117,12 @@
 
             /* Couleurs distinctes pour les icônes */
             .entry-card .hover-icon.repeat {
-                color: #c253d6 !important; /* Rose/Violet */
+                color: rgb(194, 83, 214) !important; /* Rose/Violet */
+                background-color: rgba(156, 39, 176, 0.3) !important;
             }
             .entry-card .hover-icon.notes {
-                color: #3db4f2 !important; /* Bleu */
+                color: rgb(61, 180, 242) !important; /* Bleu */
+                background-color: rgba(61, 180, 242, 0.3) !important;
             }
 
             /* Ajustement parfait des SVG au centre du carré */
@@ -121,10 +137,14 @@
             }
 
             /* Effet de zoom et d'éclaircissement au survol */
-            .entry-card .hover-icon.repeat:hover,
+            .entry-card .hover-icon.repeat:hover {
+                transform: scale(1.1) !important;
+                background-color: rgba(156, 39, 176, 0.5) !important;
+            }
+
             .entry-card .hover-icon.notes:hover {
                 transform: scale(1.1) !important;
-                background-color: rgba(255, 255, 255, 0.6) !important;
+                background-color: rgba(61, 180, 242, 0.5) !important;
             }
 
             /* --- RE-STYLAGE ET ANIMATION DU TOOLTIP NATIF D'ANILIST --- */
@@ -508,12 +528,12 @@
                     iconDiv.className = 'custom-watch-date-icon'; iconDiv.setAttribute('label', `Terminé le ${dateStr} (${daysCount}j)`);
                     iconDiv.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-calendar-check-fill" viewBox="0 0 16 16"><path d="M4 .5a.5.5 0 0 0-1 0V1H2a2 2 0 0 0-2 2v1h16V3a2 2 0 0 0-2-2h-1V.5a.5.5 0 0 0-1 0V1H4zM16 14V5H0v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2m-5.146-5.146-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 0 1 .708-.708L7.5 10.793l2.646-2.647a.5.5 0 0 1 .708.708"/></svg>`;
 
-                    if (daysCount <= 30) iconDiv.style.color = "#00ffff";
-                    else if (daysCount <= 90) iconDiv.style.color = "#00ff00";
-                    else if (daysCount <= 180) iconDiv.style.color = "#ffff00";
-                    else if (daysCount <= 270) iconDiv.style.color = "#ff8000";
-                    else if (daysCount <= 365) iconDiv.style.color = "#FF0032";
-                    else iconDiv.style.color = "#000000";
+                    if (daysCount <= 30) iconDiv.classList.add('cyan');
+                    else if (daysCount <= 90) iconDiv.classList.add('green');
+                    else if (daysCount <= 180) iconDiv.classList.add('yellow');
+                    else if (daysCount <= 270) iconDiv.classList.add('orange');
+                    else if (daysCount <= 365) iconDiv.classList.add('red');
+                    else iconDiv.classList.add('black');
 
                     titleDiv.appendChild(iconDiv);
                 }
