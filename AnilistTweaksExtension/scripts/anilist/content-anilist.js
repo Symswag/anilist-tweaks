@@ -545,25 +545,43 @@
                 const oldGenres = document.getElementById('custom-quick-genres');
                 const oldDate = document.getElementById('custom-completion-date');
                 if (oldGenres) oldGenres.remove(); if (oldDate) oldDate.remove();
-                
-                // On réinitialise tout au changement de page
-                lastPathname = location.pathname; 
-                hasFetchedForCurrentMedia = false; 
-                cachedCompletionDate = null;
-                hasFetchedAnilistData = false;
-                cachedRewatchCount = 0;
+                lastPathname = location.pathname; hasFetchedForCurrentMedia = false; cachedCompletionDate = null;
+                hasFetchedAnilistData = false; cachedRewatchCount = 0;
             }
 
             const match = location.pathname.match(/\/anime\/(\d+)/);
             if (!match) return;
             const mediaId = match[1];
 
-            // On lance les deux requêtes en parallèle si ce n'est pas déjà fait
             if (!hasFetchedForCurrentMedia) fetchSingleCompletionDate(mediaId);
             if (!hasFetchedAnilistData) fetchAnilistEntryData(mediaId);
 
             const relationsBlock = document.querySelector('.relations.small') || document.querySelector('.relations');
             if (!relationsBlock) return;
+
+            // Mapping dynamique des icônes SVG et des couleurs par genre
+            const genreStyles = {
+                'Action': { color: '#f44336', icon: '<path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z"/>' }, // Bouclier
+                'Adventure': { color: '#ff9800', icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>' }, // Boussole/Globe
+                'Comedy': { color: '#ffeb3b', icon: '<path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5-9c.83 0 1.5-.67 1.5-1.5S7.83 8 7 8s-1.5.67-1.5 1.5S6.17 11 7 11zm10 0c.83 0 1.5-.67 1.5-1.5S17.83 8 17 8s-1.5.67-1.5 1.5.67 1.5 1.5 1.5zm-5 6c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>' }, // Smile
+                'Drama': { color: '#9c27b0', icon: '<path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19.4c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.9-1.9C9.2 19.55 10.55 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-3 6c.83 0 1.5.67 1.5 1.5S9.83 12 9 12s-1.5-.67-1.5-1.5S8.17 9 9 9zm6 0c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5-1.5-.67-1.5-1.5.67-1.5 1.5-1.5zm-3 8c-2.03 0-3.8-1.11-4.75-2.75-.19-.33.05-.75.44-.75h8.62c.39 0 .63.42.44.75C15.8 15.89 14.03 17 12 17z"/>' }, // Masque
+                'Ecchi': { color: '#e91e63', icon: '<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>' }, // Cœur
+                'Fantasy': { color: '#673ab7', icon: '<path d="M7.5 5.6L5 7l1.4-2.5L5 2l2.5 1.4L10 2 8.6 4.5 10 7 7.5 5.6zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14l-2.5 1.4zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5L22 2zM14.37 7.29l-1.66-1.66c-.39-.39-1.02-.39-1.41 0L1.42 15.51c-.39.39-.39 1.02 0 1.41l1.66 1.66c.39.39 1.02.39 1.41 0l9.88-9.88c.39-.39.39-1.03 0-1.41z"/>' },
+                'Horror': { color: '#607d8b', icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 15c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1s1 .45 1 1v4c0 .55-.45 1-1 1zm1-8h-2V7h2v2z"/>' }, // Crane/Alerte
+                'Mahou Shoujo': { color: '#ff4081', icon: '<path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>' }, // Étoile
+                'Mecha': { color: '#00bcd4', icon: '<path d="M22 9V7h-2V5c0-1.1-.9-2-2-2H6c-1.1 0-2 .9-2 2v2H2v2h2v8c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V9h2zm-4 8H6V5h12v12z M7.5 9c.83 0 1.5-.67 1.5-1.5S8.33 6 7.5 6 6 6.67 6 7.5 6.67 9 7.5 9zm9 0c.83 0 1.5-.67 1.5-1.5S17.33 6 16.5 6s-1.5.67-1.5 1.5.67 1.5 1.5 1.5z"/>' }, // Robot
+                'Music': { color: '#1de9b6', icon: '<path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>' }, // Note
+                'Mystery': { color: '#3f51b5', icon: '<path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>' }, // Loupe
+                'Psychological': { color: '#009688', icon: '<path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19.4c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.9-1.9C9.2 19.55 10.55 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 15c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/>' }, // Cerveau/Cible
+                'Romance': { color: '#ff2a6d', icon: '<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>' }, // Cœur
+                'Sci-Fi': { color: '#00e5ff', icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>' }, // Atome/Satellites
+                'Slice of Life': { color: '#8bc34a', icon: '<path d="M20 3H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4v2h8v-2h4c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H4V5h16v12z"/>' }, // Tasse/Quotidien
+                'Sports': { color: '#ff6f00', icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>' }, // Ballon
+                'Supernatural': { color: '#7c4dff', icon: '<path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/>' }, // Éclair/Feu
+                'Thriller': { color: '#d50000', icon: '<path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>' } // Danger/Alerte
+            };
+
+            const defaultStyle = { color: '#3db4f2', icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>' };
 
             // --- 1. SECTION GENRES ---
             if (!document.getElementById('custom-quick-genres')) {
@@ -581,10 +599,37 @@
                             const tagsList = document.createElement('div'); tagsList.style.display = 'flex'; tagsList.style.flexWrap = 'wrap'; tagsList.style.gap = '8px';
 
                             cleanGenres.forEach(genre => {
-                                const badge = document.createElement('a'); badge.href = genre.href; badge.textContent = genre.name;
-                                badge.style.display = 'inline-flex'; badge.style.alignItems = 'center'; badge.style.padding = '8px 16px'; badge.style.backgroundColor = 'rgba(61, 180, 242, 0.1)'; badge.style.color = 'var(--color-blue)'; badge.style.borderRadius = '6px'; badge.style.fontSize = '1.3rem'; badge.style.fontWeight = '600'; badge.style.transition = 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'; badge.style.textDecoration = 'none';
-                                badge.addEventListener('mouseenter', () => { badge.style.transform = 'translateY(-2px)'; badge.style.backgroundColor = 'var(--color-blue)'; badge.style.color = '#ffffff'; badge.style.boxShadow = '0 4px 12px rgba(61, 180, 242, 0.3)'; });
-                                badge.addEventListener('mouseleave', () => { badge.style.transform = 'translateY(0)'; badge.style.backgroundColor = 'rgba(61, 180, 242, 0.1)'; badge.style.color = 'var(--color-blue)'; badge.style.boxShadow = 'none'; });
+                                const styleConfig = genreStyles[genre.name] || defaultStyle;
+                                const hexColor = styleConfig.color;
+
+                                const badge = document.createElement('a'); 
+                                badge.href = genre.href; 
+                                badge.style.display = 'inline-flex'; 
+                                badge.style.alignItems = 'center'; 
+                                badge.style.padding = '8px 16px'; 
+                                badge.style.backgroundColor = `${hexColor}1A`; // 10% d'opacité hex (#RRGGBB1A)
+                                badge.style.color = hexColor; 
+                                badge.style.borderRadius = '6px'; 
+                                badge.style.fontSize = '1.3rem'; 
+                                badge.style.fontWeight = '600'; 
+                                badge.style.transition = 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'; 
+                                badge.style.textDecoration = 'none';
+
+                                // Injection de l'icône SVG + texte
+                                badge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24">${styleConfig.icon}</svg>${genre.name}`;
+
+                                badge.addEventListener('mouseenter', () => { 
+                                    badge.style.transform = 'translateY(-2px)'; 
+                                    badge.style.backgroundColor = hexColor; 
+                                    badge.style.color = '#ffffff'; 
+                                    badge.style.boxShadow = `0 4px 12px ${hexColor}4D`; 
+                                });
+                                badge.addEventListener('mouseleave', () => { 
+                                    badge.style.transform = 'translateY(0)'; 
+                                    badge.style.backgroundColor = `${hexColor}1A`; 
+                                    badge.style.color = hexColor; 
+                                    badge.style.boxShadow = 'none'; 
+                                });
                                 tagsList.appendChild(badge);
                             });
                             container.appendChild(tagsList); relationsBlock.parentNode.insertBefore(container, relationsBlock);
@@ -594,49 +639,29 @@
             }
 
             // --- 2. SECTION VISIONNAGE (DATE & REWATCH) ---
-            // On s'assure que les 2 appels réseau sont terminés avant de créer le bloc
             if (hasFetchedForCurrentMedia && hasFetchedAnilistData && !document.getElementById('custom-completion-date')) {
-                const dateContainer = document.createElement('div'); 
-                dateContainer.id = 'custom-completion-date'; 
-                dateContainer.style.marginBottom = '25px';
-                
-                const dateTitle = document.createElement('h2'); 
-                dateTitle.textContent = 'Visionnage'; 
-                dateTitle.style.fontSize = '1.4rem'; 
-                dateTitle.style.fontWeight = '700'; 
-                dateTitle.style.letterSpacing = '0.03em'; 
-                dateTitle.style.marginBottom = '12px'; 
-                dateTitle.style.color = 'var(--color-text-main)';
+                const dateContainer = document.createElement('div'); dateContainer.id = 'custom-completion-date'; dateContainer.style.marginBottom = '25px';
+                const dateTitle = document.createElement('h2'); dateTitle.textContent = 'Visionnage'; dateTitle.style.fontSize = '1.4rem'; dateTitle.style.fontWeight = '700'; dateTitle.style.letterSpacing = '0.03em'; dateTitle.style.marginBottom = '12px'; dateTitle.style.color = 'var(--color-text-main)';
                 dateContainer.appendChild(dateTitle);
-
+                
                 const badgeWrapper = document.createElement('div');
                 badgeWrapper.style.display = 'flex';
                 badgeWrapper.style.gap = '10px';
                 badgeWrapper.style.flexWrap = 'wrap';
 
-                // Badge 1 : Date
-                const dateBadge = document.createElement('div'); 
-                dateBadge.style.display = 'inline-flex'; 
-                dateBadge.style.alignItems = 'center'; 
-                dateBadge.style.padding = '8px 16px'; 
-                dateBadge.style.borderRadius = '6px'; 
-                dateBadge.style.fontSize = '1.3rem'; 
-                dateBadge.style.fontWeight = '600';
+                const dateBadge = document.createElement('div'); dateBadge.style.display = 'inline-flex'; dateBadge.style.alignItems = 'center'; dateBadge.style.padding = '8px 16px'; dateBadge.style.borderRadius = '6px'; dateBadge.style.fontSize = '1.3rem'; dateBadge.style.fontWeight = '600';
 
                 if (cachedCompletionDate) {
                     const cachedCompletionDateStr = cachedCompletionDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
                     const daysCount = dateGapToday(cachedCompletionDate);
                     dateBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg> Terminé le ${cachedCompletionDateStr} (${daysCount}j)`;
-                    dateBadge.style.backgroundColor = 'rgba(62, 207, 142, 0.1)'; 
-                    dateBadge.style.color = '#3ECF8E';
+                    dateBadge.style.backgroundColor = 'rgba(62, 207, 142, 0.1)'; dateBadge.style.color = '#3ECF8E';
                 } else {
                     dateBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg> Date pas encore enregistrée`;
-                    dateBadge.style.backgroundColor = 'rgba(225, 51, 51, 0.1)'; 
-                    dateBadge.style.color = '#e13333';
+                    dateBadge.style.backgroundColor = 'rgba(225, 51, 51, 0.1)'; dateBadge.style.color = '#e13333';
                 }
                 badgeWrapper.appendChild(dateBadge);
 
-                // Badge 2 : Rewatch (Utilisation de la variable GraphQL)
                 if (cachedRewatchCount > 0) {
                     const rewatchBadge = document.createElement('div');
                     rewatchBadge.style.display = 'inline-flex';
@@ -656,11 +681,7 @@
                 dateContainer.appendChild(badgeWrapper);
 
                 const genresBlock = document.getElementById('custom-quick-genres');
-                if (genresBlock) { 
-                    genresBlock.parentNode.insertBefore(dateContainer, genresBlock); 
-                } else { 
-                    relationsBlock.parentNode.insertBefore(dateContainer, relationsBlock); 
-                }
+                if (genresBlock) { genresBlock.parentNode.insertBefore(dateContainer, genresBlock); } else { relationsBlock.parentNode.insertBefore(dateContainer, relationsBlock); }
             }
         }
 
