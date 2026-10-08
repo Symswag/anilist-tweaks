@@ -162,11 +162,15 @@
                 z-index: 9999 !important;
                 
                 /* Centrage vertical absolu */
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-                box-sizing: border-box !important;
+                display: none !important;
 
+                white-space: normal !important; 
+                overflow-wrap: break-word !important;
+                max-width: 250px !important;
+                min-width: 25px !important;
+                text-align: center !important;
+
+                visibility: hidden !important;
                 /* Moteur d'animation (axe X) */
                 transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease !important;
             }
@@ -183,6 +187,10 @@
                 opacity: 1 !important;
                 transform: translateX(0px) !important; 
                 visibility: visible !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                box-sizing: border-box !important;
             }
         `;
         document.head.appendChild(style);
