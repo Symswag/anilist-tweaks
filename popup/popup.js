@@ -404,15 +404,13 @@ function renderListConfigRows(availableLists, currentConfigJson) {
         colorInput.addEventListener('input', (e) => {
             colorPickerBtn.style.backgroundColor = e.target.value;
             hexaInput.value = e.target.value;
-            saveAnilistOptions();
         });
 
         hexaInput.addEventListener('input', (e) => {
             const val = e.target.value.trim();
-            if (/^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$/.test(val)) {
+            if (/^#([0-9A-Fa-f]{6})$/.test(val)) {
                 colorInput.value = val;
                 colorPickerBtn.style.backgroundColor = val;
-                saveAnilistOptions();
             }
         });
 
