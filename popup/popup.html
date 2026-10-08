@@ -18,9 +18,16 @@
 
         /* AniList Styles */
         label { display: block; margin-top: 10px; font-size: 0.9rem; font-weight: bold; color: #fff; }
-        input[type="text"] { box-sizing: border-box; width: 100%; padding: 6px; margin-top: 4px; border-radius: 4px; border: 1px solid #151f2e; background: #151f2e; color: #fff; font-size: 0.9rem; }
-        input[type="number"] { box-sizing: border-box; width: 100%; padding: 6px; margin-top: 4px; border-radius: 4px; border: 1px solid #151f2e; background: #151f2e; color: #fff; font-size: 0.9rem; }
+        
+        input[type="text"] { box-sizing: border-box; width: 100%; padding: 6px; margin-top: 4px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.1); background: #151f2e; color: #fff; font-size: 0.9rem; }
+        input[type="text"]:focus-within { outline: none; border-color: #3db4f2; }
+        input[type="number"] { box-sizing: border-box; width: 75px; font-size: 0.9rem; }
         input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        #anilistAuthBtn { box-sizing: border-box; padding: 6px 12px; border-radius: 4px; border: none; background: #3db4f2; color: #11161d; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        #anilistAuthBtn:hover { background: #3ecf8e; }
+        input[type="text"]:disabled, button:disabled { background: rgba(61, 180, 242, 0.3); cursor: not-allowed; }
+        input[type="color"] { padding: 0; border: none; border-radius: 4px; background: transparent; cursor: pointer; }
+        
         .list-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
         .list-row input.list-name { flex: 1; margin-top: 0; }
         .list-row input[type="color"] { width: 38px; height: 32px; padding: 0; border: none; border-radius: 4px; background: transparent; cursor: pointer; }
@@ -28,7 +35,61 @@
         .remove-btn:hover { background: rgba(225, 51, 51, 0.1); }
         .add-btn { background: rgba(61, 180, 242, 0.1); color: var(--color-blue, #3db4f2); margin-top: 8px; border: 1px dashed #3db4f2; width: 100%; padding: 8px; border-radius: 4px; cursor: pointer; }
         .save-btn { margin-top: 15px; padding: 8px; background: #3ecf8e; color: #111; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; font-size: 1rem; transition: background 0.2s; }
+        .save-btn:hover { background: #3db4f2; color: #fff; }
         #status { margin-top: 10px; text-align: center; font-weight: bold; font-size: 0.9rem; min-height: 18px; }
+        .al-pill-wrapper { display: flex; align-items: center; background: #151f2e; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; padding-right: 4px; overflow: hidden; transition: border-color 0.2s; }
+        .al-pill-wrapper:focus-within { border-color: #3db4f2; }
+        .al-pill-input { width: 100% !important; background: transparent; color: #fff; border: none; padding: 6px 0 6px 8px; text-align: left; font-weight: bold; outline: none; font-size: 13px; }
+        .al-pill-input::-webkit-outer-spin-button, .al-pill-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .al-pill-input[type=number] { -moz-appearance: textfield; }
+        .al-pill-label { color: #666; font-size: 11px; padding: 0 6px 0 2px; font-weight: bold; }
+        .al-arrows-spin { display: flex; flex-direction: column; justify-content: center; gap: 2px; }
+        .al-arrow-btn { background: transparent; border: none; color: #555; cursor: pointer; font-size: 7px; padding: 1px 3px; line-height: 1; border-radius: 2px; transition: all 0.1s; }
+        .al-arrow-btn:hover { background: rgba(61, 180, 242, 0.2); color: #3db4f2; }
+        .al-arrow-btn:active { transform: scale(0.9); }
+
+        select { box-sizing: border-box; width: 100%; padding: 6px; margin-top: 4px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.1); background: #151f2e; color: #fff; font-size: 0.9rem; }
+
+        .al-block-auth {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center; /* Centre les éléments horizontalement */
+            gap: 20px; /* Espace propre entre la ligne 1 et 2, et entre le bouton et le statut */
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 10px;
+        }
+
+        /* Ligne 1 : Le label prend toute la largeur et se centre */
+        .al-block-auth #anilistAuthLabel {
+            flex: 0 0 100%;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+
+        /* Ligne 2 : Le bouton et le statut s'alignent naturellement */
+        .al-block-auth #anilistAuthBtn {
+            cursor: pointer;
+        }
+
+        .al-block-auth #anilistStatus {
+            font-size: 0.9em;
+            /* Tu peux retirer le margin-left: 8px inline dans le HTML car 'gap' s'en occupe déjà */
+        }
+
+        .config-list-delete {
+            background: transparent;
+            color: #e13333;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0 4px;
+            width: auto;
+            margin-top: 0;
+        }
 
         /* MalSync Styles */
         .ms-row { margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: #ddd; }
@@ -60,13 +121,43 @@
     <div id="view-anilist" class="menu-view">
         <button class="back-btn" data-target="view-main">← Retour</button>
         <h3>AniList Tweaks</h3>
-        <label>URL Supabase</label><input type="text" id="supabaseUrl">
-        <label>Clé Anonyme Supabase</label><input type="text" id="supabaseKey">
-        <label>Nom de la table</label><input type="text" id="tableName" placeholder="anime_history">
-        <label>Pseudo AniList</label><input type="text" id="anilistUsername">
-        <label>Liste Notifications</label><input type="text" id="notifList" placeholder="Not Yet">
-        <label>Spinner Duration (seconds)</label><input type="number" id="spinnerDuration" min="1" value="3">
         
+        <div class="al-block-auth">
+            <label id="anilistAuthLabel">Compte AniList</label>
+            <button type="button" id="anilistAuthBtn">Se connecter à AniList</button>
+            <span id="anilistStatus" style="font-size: 0.9em; margin-left: 8px;">Non connecté</span>
+        </div>
+        
+        <label for="anilistUsername">Pseudo AniList</label>
+        <input type="text" id="anilistUsername" disabled placeholder="Connecte-toi pour charger...">
+        
+        <label for="notifList">Liste Notifications</label>
+        <select id="notifList">
+            <option value="">-- Connecte-toi pour charger les listes --</option>
+        </select>
+
+        <label for="removeList">Liste à retirer automatiquement :</label>
+        <select id="removeList">
+            <option value="">-- Connecte-toi pour charger les listes --</option>
+        </select>
+
+        <label for="supabaseUrl">URL Supabase</label>
+        <input type="text" id="supabaseUrl">
+        <label for="supabaseKey">Clé Anonyme Supabase</label>
+        <input type="text" id="supabaseKey">
+        <label for="tableName">Nom de la table</label>
+        <input type="text" id="tableName" placeholder="anime_history">
+              
+        <label for="spinnerDuration">Date Sync delay (seconds)</label>
+        
+        <div class="al-pill-wrapper">
+            <input type="number" class="al-pill-input" id="spinnerDuration" min="1" value="3">
+            <div class="al-arrows-spin">
+                <button class="al-arrow-btn" data-target="spinnerDuration" data-dir="up">▲</button>
+                <button class="al-arrow-btn" data-target="spinnerDuration" data-dir="down">▼</button>
+            </div>
+        </div>
+
         <label>Configuration des Listes</label>
         <div id="listsContainer"></div>
         <button id="addList" class="add-btn">➕ Ajouter une liste</button>

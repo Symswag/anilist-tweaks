@@ -11,18 +11,22 @@
         supabaseKey: '',
         tableName: 'anime_history',
         anilistUsername: 'Symswag',
-        spinnerDuration: 3
+        spinnerDuration: 3,
+        removeList: 'Close At Hand', // Liste par défaut
+        anilistToken: '',
     }, function(config) {
         
         const SUPABASE_URL = config.supabaseUrl;
         const SUPABASE_ANON_KEY = config.supabaseKey;
         const TABLE_NAME = config.tableName;
         const TARGET_USERNAME = config.anilistUsername;
+        const REMOVE_LIST = config.removeList;
+        const ANILIST_TOKEN = config.anilistToken;
         
         // Si les identifiants Supabase ne sont pas configurés, on stoppe tout
         if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
 
-        const spinnerDuration = config.spinnerDuration || 3; // Durée du spinner en secondes
+        const spinnerDuration = config.spinnerDuration || 3;
         const TRIGGER_PERCENTAGE = 91;
         const PROGRESS_COLOR = "#00FFFF";
         const FINISH_COLOR = "#3ECF8E";
@@ -67,24 +71,20 @@
 
             const progressCircle = cd.querySelector('.ad-spinner-progress');
             const countdownSpan = cd.querySelector('#ad-countdown-number');
-            const totalLength = 2 * Math.PI * 20; // ~125.66px
+            const totalLength = 2 * Math.PI * 20;
             let timeLeft = spinnerDuration;
 
             countdownSpan.innerText = timeLeft;
             countdownSpan.style.color = PROGRESS_COLOR;
             progressCircle.style.stroke = PROGRESS_COLOR;
 
-            // Définition de la longueur du trait
             progressCircle.style.strokeDasharray = totalLength;
 
-            // 1. Réinitialisation instantanée du cercle plein
             progressCircle.style.transition = 'none';
             progressCircle.style.strokeDashoffset = 0;
 
-            // 2. Force le navigateur à appliquer la réinitialisation (reflow)
             void progressCircle.getBoundingClientRect();
 
-            // 3. Lancement de la transition pour vider le cercle sur toute la durée
             progressCircle.style.transition = `stroke-dashoffset ${spinnerDuration}s linear`;
             progressCircle.style.strokeDashoffset = totalLength;
 
@@ -101,7 +101,6 @@
                     countdownSpan.innerText = "✓";
                     countdownSpan.style.color = FINISH_COLOR;
                     
-                    // Animation de fin
                     progressCircle.style.transition = 'stroke-dashoffset 0.5s linear, stroke 0.5s linear';
                     progressCircle.style.strokeDashoffset = 0;
                     progressCircle.style.stroke = FINISH_COLOR;
@@ -113,6 +112,76 @@
                     }, 2000);
                 }
             }, 1000);
+        }
+
+        // Fonction pour retirer automatiquement l'anime de la liste
+        async function removeFromCloseAtHandList(mediaId) {
+            if (!REMOVE_LIST || !ANILIST_TOKEN) {
+                if (!ANILIST_TOKEN) console.warn("⚠️ Token AniList manquant pour exécuter la mutation.");
+                return;
+            }
+
+            try {
+                // 1. On récupère les listes personnalisées actuelles de l'anime pour l'utilisateur
+                const getMediaListQuery = `
+                    query ($mediaId: Int, $userName: String) {
+                        MediaList(mediaId: $mediaId, userName: $userName) {
+                            id
+                            customLists
+                        }
+                    }
+                `;
+                const res = await fetch('https://graphql.anilist.co', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ query: getMediaListQuery, variables: { mediaId: mediaId, userName: TARGET_USERNAME } })
+                });
+                const data = await res.json();
+
+                if (data && data.data && data.data.MediaList) {
+                    const entry = data.data.MediaList;
+                    let customLists = entry.customLists || {};
+
+                    // Si l'anime est coché dans la liste cible (ex: true)
+                    if (customLists[REMOVE_LIST] === true) {
+                        customLists[REMOVE_LIST] = false; // On le retire de la liste
+
+                        // 2. On envoie la mutation GraphQL avec l'en-tête d'authentification
+                        const mutation = `
+                            mutation ($mediaId: Int, $customLists: [String]) {
+                                SaveMediaListEntry(mediaId: $mediaId, customLists: $customLists) {
+                                    id
+                                    customLists
+                                }
+                            }
+                        `;
+                        
+                        const mutRes = await fetch('https://graphql.anilist.co', {
+                            method: 'POST',
+                            headers: { 
+                                'Content-Type': 'application/json', 
+                                'Accept': 'application/json',
+                                'Authorization': `Bearer ${ANILIST_TOKEN}`
+                            },
+                            body: JSON.stringify({
+                                query: mutation,
+                                variables: {
+                                    mediaId: mediaId,
+                                    customLists: customLists
+                                }
+                            })
+                        });
+
+                        if (mutRes.ok) {
+                            console.log(`✅ Retiré de la liste "${REMOVE_LIST}" avec succès.`);
+                        } else {
+                            console.error("❌ Erreur lors de la mutation AniList :", await mutRes.text());
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error(`Erreur lors du retrait de la liste ${REMOVE_LIST}:`, err);
+            }
         }
 
         async function syncAniListToSupabase() {
@@ -165,7 +234,7 @@
                 });
 
                 const supabasePayload = [];
-                filteredActivities.forEach(act => {
+                for (const act of filteredActivities) {
                     const newDateObj = new Date(act.createdAt * 1000);
                     const newTime = newDateObj.getTime();
                     const existingTime = existingDatesMap[act.media.id];
@@ -175,8 +244,11 @@
                             media_id: act.media.id,
                             completed_at: newDateObj.toISOString()
                         });
+
+                        // On tente d'enlever l'anime de la liste "Close At Hand"
+                        await removeFromCloseAtHandList(act.media.id);
                     }
-                });
+                }
 
                 if (supabasePayload.length === 0) return;
 
