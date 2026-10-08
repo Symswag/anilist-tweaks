@@ -360,11 +360,39 @@ function renderListConfigRows(availableLists, currentConfigJson) {
             select.appendChild(opt);
         });
 
-        // Color picker
+        // Input couleur natif (masqué mais fonctionnel)
         const colorInput = document.createElement('input');
         colorInput.type = 'color';
         colorInput.className = 'config-list-color';
         colorInput.value = item.color || '#00ffff';
+        colorInput.style.position = 'absolute';
+        colorInput.style.opacity = '0';
+        colorInput.style.width = '0';
+        colorInput.style.height = '0';
+        colorInput.style.pointerEvents = 'none';
+
+        // Bouton/Pastille personnalisée (déclencheur tactile)
+        const colorPickerBtn = document.createElement('button');
+        colorPickerBtn.type = 'button';
+        colorPickerBtn.className = 'custom-color-picker-btn';
+        colorPickerBtn.style.backgroundColor = colorInput.value;
+        colorPickerBtn.style.width = '32px';
+        colorPickerBtn.style.height = '32px';
+        colorPickerBtn.style.borderRadius = '6px';
+        colorPickerBtn.style.border = '2px solid rgba(255, 255, 255, 0.2)';
+        colorPickerBtn.style.cursor = 'pointer';
+        colorPickerBtn.style.flexShrink = '0';
+
+        // Événement Tactile/Clic pour forcer l'ouverture du sélecteur
+        colorPickerBtn.addEventListener('click', () => {
+            colorInput.showPicker ? colorInput.showPicker() : colorInput.click();
+        });
+
+        // Mise à jour de la couleur de la pastille en temps réel
+        colorInput.addEventListener('input', (e) => {
+            colorPickerBtn.style.backgroundColor = e.target.value;
+            saveAnilistOptions();
+        });
 
         // Bouton supprimer (Supprimer la règle)
         const delBtn = document.createElement('button');
@@ -375,6 +403,7 @@ function renderListConfigRows(availableLists, currentConfigJson) {
 
         row.appendChild(select);
         row.appendChild(colorInput);
+        row.appendChild(colorPickerBtn);
         row.appendChild(delBtn);
         container.appendChild(row);
     });
