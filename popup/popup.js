@@ -383,6 +383,18 @@ function renderListConfigRows(availableLists, currentConfigJson) {
         colorPickerBtn.style.cursor = 'pointer';
         colorPickerBtn.style.flexShrink = '0';
 
+        const hexaInput = document.createElement('input');
+        hexaInput.type = 'text';
+        hexaInput.className = 'config-list-color';
+        hexaInput.value = item.color || '#00ffff';
+        hexaInput.style.width = '65px';
+        hexaInput.style.padding = '4px 6px';
+        hexaInput.style.borderRadius = '4px';
+        hexaInput.style.border = '1px solid #333';
+        hexaInput.style.background = '#1a1d24';
+        hexaInput.style.color = '#fff';
+        hexaInput.style.fontSize = '12px';
+
         // Événement Tactile/Clic pour forcer l'ouverture du sélecteur
         colorPickerBtn.addEventListener('click', () => {
             colorInput.showPicker ? colorInput.showPicker() : colorInput.click();
@@ -391,7 +403,17 @@ function renderListConfigRows(availableLists, currentConfigJson) {
         // Mise à jour de la couleur de la pastille en temps réel
         colorInput.addEventListener('input', (e) => {
             colorPickerBtn.style.backgroundColor = e.target.value;
+            hexaInput.value = e.target.value;
             saveAnilistOptions();
+        });
+
+        hexaInput.addEventListener('input', (e) => {
+            const val = e.target.value.trim();
+            if (/^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$/.test(val)) {
+                colorInput.value = val;
+                colorPickerBtn.style.backgroundColor = val;
+                saveAnilistOptions();
+            }
         });
 
         // Bouton supprimer (Supprimer la règle)
@@ -404,6 +426,7 @@ function renderListConfigRows(availableLists, currentConfigJson) {
         row.appendChild(select);
         row.appendChild(colorInput);
         row.appendChild(colorPickerBtn);
+        row.appendChild(hexaInput);
         row.appendChild(delBtn);
         container.appendChild(row);
     });
