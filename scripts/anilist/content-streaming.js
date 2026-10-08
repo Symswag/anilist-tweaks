@@ -8,50 +8,50 @@
         {
             name: 'Crunchyroll',
             color: '#ff6600',
-            icon: '🟠',
             keywords: ['crunchyroll'],
+            domain: 'https://www.crunchyroll.com',
             searchUrl: 'https://www.crunchyroll.com/fr/search?q='
         },
         {
             name: 'ADN',
             color: '#00aae4',
-            icon: '🔵',
             keywords: ['adn', 'animationdigitalnetwork'],
+            domain: 'https://animationdigitalnetwork.com',
             searchUrl: 'https://animationdigitalnetwork.com/video?search='
         },
         {
             name: 'Netflix',
             color: '#e50914',
-            icon: '🔴',
             keywords: ['netflix'],
+            domain: 'https://www.netflix.com',
             searchUrl: 'https://www.netflix.com/search?q='
         },
         {
             name: 'Disney+',
             color: '#00FF00',
-            icon: '🟢',
             keywords: ['disney', 'disneyplus'],
+            domain: 'https://www.disneyplus.com',
             searchUrl: 'https://www.disneyplus.com/search?q='
         },
         {
             name: 'VoirAnime',
             color: '#ffffff',
-            icon: '⚪',
             keywords: [],
+            domain: 'https://voir-anime.to',
             searchUrl: 'https://voir-anime.to/?post_type=wp-manga&s='
         },
         {
             name: 'Anime-sama',
             color: '#000000',
-            icon: '⚫',
             keywords: [],
+            domain: 'https://anime-sama.to',
             searchUrl: 'https://anime-sama.to/catalogue/?search='
         },
         {
             name: 'FRAnime',
             color: '#ea1d2e',
-            icon: '🔴',
             keywords: [],
+            domain: 'https://franime.fr',
             searchUrl: 'https://franime.fr/recherche?search='
         }
     ];
@@ -136,6 +136,7 @@
         STREAMING_CONFIG.forEach(site => {
             let finalUrl = '';
             let isDirectLink = false;
+            const iconUrl = `https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=${encodeURIComponent(site.domain)}&size=16`;
 
             const directLinkFound = allLinksInSidebar.find(url =>
                 site.keywords.some(keyword => url.includes(keyword))
@@ -178,7 +179,7 @@
 
                 btn.innerHTML = `
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <span>${site.icon}</span>
+                        <img src="${iconUrl}" width="16" height="16" style="display: block; border-radius: 2px;" alt="" />
                         <span>${labelText}</span>
                     </div>
                     <span style="font-size: 11px; opacity: 0.6;">${statusIcon}</span>

@@ -2,104 +2,166 @@
     'use strict';
 
     /* ==========================================================================
-       6. MODULE SEARCH BUTTONS (Exécuté uniquement sur anilist.co via manifest)
+       6. MODULE SEARCH BUTTONS HUB (Exécuté uniquement sur anilist.co via manifest)
        ========================================================================== */
 
-    function injectButtons() {
-        const h1 = document.querySelector('h1');
+    const SEARCH_CONFIG = [
+        {
+            name: 'Anime News Network',
+            color: '#0055a5',
+            domain: 'https://www.animenewsnetwork.com',
+            baseUrl: 'https://www.animenewsnetwork.com/encyclopedia/search/name?q='
+        },
+        {
+            name: 'Nautiljon',
+            color: '#ecb044',
+            domain: 'https://www.nautiljon.com',
+            baseUrl: 'https://www.nautiljon.com/search.php?q='
+        },
+        {
+            name: 'Fandom Wiki (Google)',
+            color: '#fa005a',
+            domain: 'https://www.fandom.com',
+            baseUrl: 'https://www.google.com/search?q=',
+            suffix: ' wiki'
+        }
+    ];
 
-        // On vérifie si le h1 existe et si nos boutons ne sont pas déjà présents
-        if (h1 && !document.querySelector('.custom-search-links')) {
+    let currentAnimeId = null;
+    let waitForElements = null;
 
-            // Récupération du titre pur (premier nœud de texte)
-            const animeTitle = h1.childNodes[0].textContent.trim();
-            if (!animeTitle) return;
+    function init(forceReset = false) {
+        const match = window.location.pathname.match(/\/anime\/(\d+)/);
+        if (!match) return;
 
-            // Création d'un conteneur global pour nos boutons
-            const wrapper = document.createElement('div');
-            wrapper.className = 'custom-search-links';
-            wrapper.style.float = 'right';
-            wrapper.style.display = 'flex';
-            wrapper.style.gap = '5px'; // Espace entre les deux icônes
-            wrapper.style.marginLeft = '5px';
-            wrapper.style.userSelect = 'none';
+        const animeId = parseInt(match[1]);
 
-            // --- CONFIGURATION DES BOUTONS ---
-            const buttons = [
-                {
-                    title: 'Rechercher sur ANN',
-                    url: `https://www.animenewsnetwork.com/encyclopedia/search/name?q=${encodeURIComponent(animeTitle)}`,
-                    icon: 'https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://www.animenewsnetwork.com&size=16'
-                },
-                {
-                    title: 'Rechercher sur Nautiljon',
-                    url: `https://www.nautiljon.com/search.php?q=${encodeURIComponent(animeTitle)}`,
-                    icon: 'https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://www.nautiljon.com&size=16'
-                },
-                {
-                    title: 'Rechercher Wiki (Google)',
-                    url: `https://www.google.com/search?q=${encodeURIComponent(animeTitle + " wiki")}`,
-                    icon: 'https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://www.fandom.com&size=16'
+        if (forceReset) {
+            currentAnimeId = null;
+        }
+
+        if (animeId === currentAnimeId) return;
+        currentAnimeId = animeId;
+
+        if (waitForElements) clearInterval(waitForElements);
+
+        const oldContainer = document.getElementById('fr-search-links-hub');
+        if (oldContainer) oldContainer.remove();
+
+        waitForElements = setInterval(() => {
+            const sidebar = document.querySelector('.page-content .sidebar');
+            const rankingsBox = document.querySelector('.page-content .sidebar .rankings');
+
+            if (sidebar && rankingsBox) {
+                clearInterval(waitForElements);
+
+                let animeTitle = "";
+                const metaTitle = document.querySelector('meta[property="og:title"]');
+                if (metaTitle && metaTitle.content) {
+                    animeTitle = metaTitle.content.trim();
+                } else {
+                    animeTitle = document.title.replace(' · AniList', '').trim();
                 }
-            ];
 
-            // Création et ajout de chaque bouton au wrapper
-            buttons.forEach(btn => {
-                const link = document.createElement('a');
-                link.href = btn.url;
-                link.target = '_blank';
-                link.title = btn.title;
-                link.style.display = 'flex';
-                link.style.alignItems = 'center';
+                setTimeout(() => {
+                    buildSearchHub(sidebar, rankingsBox, animeTitle);
+                }, 200);
+            }
+        }, 300);
+    }
 
-                const img = document.createElement('img');
-                img.src = btn.icon;
-                img.width = '16';
-                img.height = '16';
-                img.style.display = 'block';
+    function buildSearchHub(sidebar, rankingsBox, animeTitle) {
+        if (document.getElementById('fr-search-links-hub')) return;
 
-                link.appendChild(img);
-                wrapper.appendChild(link);
-            });
+        const container = document.createElement('div');
+        container.id = 'fr-search-links-hub';
+        container.style.cssText = `
+            background: rgb(21, 31, 46);
+            border-radius: 4px;
+            padding: 12px;
+            margin-top: 16px;
+            margin-bottom: 16px;
+            font-family: Overpass, -apple-system, BlinkMacSystemFont, Segoe UI, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+        `;
 
-            // Insertion du wrapper dans le h1
-            h1.appendChild(wrapper);
+        const title = document.createElement('h3');
+        title.innerText = 'Search External Links';
+        title.style.cssText = `
+            color: rgb(159, 173, 189);
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 10px;
+            margin-top: 0;
+        `;
+        container.appendChild(title);
+
+        const listContainer = document.createElement('div');
+        listContainer.style.cssText = 'display: flex; flex-direction: column; gap: 8px;';
+
+        SEARCH_CONFIG.forEach(site => {
+            const queryText = animeTitle + (site.suffix || '');
+            const finalUrl = site.baseUrl + encodeURIComponent(queryText);
+            const iconUrl = `https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=${encodeURIComponent(site.domain)}&size=16`;
+
+            const defaultBg = 'rgba(255, 255, 255, 0.05)';
+            const hoverBg = 'rgba(255, 255, 255, 0.1)';
+
+            const btn = document.createElement('a');
+            btn.href = finalUrl;
+            btn.target = '_blank';
+            btn.style.cssText = `
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                background: ${defaultBg};
+                padding: 8px 12px;
+                border-radius: 4px;
+                color: #edf1f5;
+                text-decoration: none;
+                font-size: 13px;
+                font-weight: 600;
+                border-left: 4px solid ${site.color};
+                transition: background 0.2s;
+            `;
+
+            btn.onmouseover = () => btn.style.background = hoverBg;
+            btn.onmouseout = () => btn.style.background = defaultBg;
+
+            btn.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <img src="${iconUrl}" width="16" height="16" style="display: block; border-radius: 2px;" alt="" />
+                    <span>Search on ${site.name}</span>
+                </div>
+                <span style="font-size: 11px; opacity: 0.6;">🔍</span>
+            `;
+
+            listContainer.appendChild(btn);
+        });
+
+        container.appendChild(listContainer);
+
+        // Insertion dans la sidebar
+        const streamingContainer = document.getElementById('fr-streaming-platforms');
+        if (streamingContainer) {
+            streamingContainer.after(container);
+        } else {
+            sidebar.insertBefore(container, rankingsBox);
         }
     }
 
-    // --- GESTION DE LA NAVIGATION (Optimisée) ---
-    let lastUrl = location.href;
+    // Navigation SPA
+    init(false);
+    window.addEventListener('popstate', () => init(true));
 
-    function checkAndInject() {
-        // On s'assure d'être sur une page anime avant de faire quoi que ce soit
-        if (!window.location.href.includes('/anime/')) return;
-
-        // Si l'URL a changé, on nettoie pour forcer ta fonction à recréer les boutons
-        if (location.href !== lastUrl) {
-            lastUrl = location.href;
-            const oldWrapper = document.querySelector('.custom-search-links');
-            if (oldWrapper) oldWrapper.remove();
-        }
-
-        // On utilise un try/catch pour éviter qu'une erreur bloque la page si le
-        // texte du h1 n'est pas encore complètement généré par le site.
-        try {
-            injectButtons();
-        } catch (e) {
-            // Silence en cas d'erreur de chargement (le MutationObserver relancera de toute façon)
-        }
-    }
-
-    // Le MutationObserver surveille les changements invisibles dans le code de la page.
+    let lastUrl = window.location.href;
     const observer = new MutationObserver(() => {
-        checkAndInject();
+        if (window.location.href !== lastUrl) {
+            lastUrl = window.location.href;
+            if (window.location.pathname.includes('/anime/')) {
+                init(true);
+            }
+        }
     });
+    observer.observe(document.body, { childList: true, subtree: true });
 
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true
-    });
-
-    // Lancement initial
-    checkAndInject();
 })();
