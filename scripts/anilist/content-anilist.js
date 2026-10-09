@@ -639,15 +639,15 @@
                     if (statusText.toLowerCase().includes('finished')) {
                         statusBadge.style.backgroundColor = 'rgba(61, 180, 242, 0.1)';
                         statusBadge.style.color = '#3db4f2';
-                        statusBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> Terminé (${statusText})`;
+                        statusBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> <span style="display: inline-block; line-height: 1;">Terminé (${statusText})</span>`;
                     } else if (statusText.toLowerCase().includes('releasing')) {
                         statusBadge.style.backgroundColor = 'rgba(62, 207, 142, 0.1)';
                         statusBadge.style.color = '#3ECF8E';
-                        statusBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> En cours (${statusText})`;
+                        statusBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> <span style="display: inline-block; line-height: 1;">En cours (${statusText})</span>`;
                     } else {
                         statusBadge.style.backgroundColor = 'rgba(255, 152, 0, 0.1)';
                         statusBadge.style.color = '#ff9800';
-                        statusBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg> ${statusText}`;
+                        statusBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg> <span style="display: inline-block; line-height: 1;">${statusText}</span>`;
                     }
                     line1Badges.appendChild(statusBadge);
                 }
@@ -664,11 +664,11 @@
                 if (cachedCompletionDate) {
                     const cachedCompletionDateStr = cachedCompletionDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
                     const daysCount = dateGapToday(cachedCompletionDate);
-                    dateBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg> Vu le ${cachedCompletionDateStr} (${daysCount}j)`;
+                    dateBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg> <span style="display: inline-block; line-height: 1;">Vu le ${cachedCompletionDateStr} (${daysCount}j)</span>`;
                     dateBadge.style.backgroundColor = 'rgba(62, 207, 142, 0.1)';
                     dateBadge.style.color = '#3ECF8E';
                 } else {
-                    dateBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg> Pas de date enregistrée`;
+                    dateBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg> <span style="display: inline-block; line-height: 1;">Pas de date enregistrée</span>`;
                     dateBadge.style.backgroundColor = 'rgba(225, 51, 51, 0.1)';
                     dateBadge.style.color = '#e13333';
                 }
@@ -685,7 +685,7 @@
                     rewatchBadge.style.fontWeight = '600';
                     rewatchBadge.style.backgroundColor = 'rgba(156, 39, 176, 0.1)';
                     rewatchBadge.style.color = '#c253d6';
-                    rewatchBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg> ${cachedRewatchCount} Rewatch${cachedRewatchCount > 1 ? 's' : ''}`;
+                    rewatchBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg> <span style="display: inline-block; line-height: 1;">${cachedRewatchCount} Rewatch${cachedRewatchCount > 1 ? 's' : ''}</span>`;
                     line1Badges.appendChild(rewatchBadge);
                 }
 
