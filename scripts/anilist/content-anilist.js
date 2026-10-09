@@ -728,14 +728,142 @@
             });
         }
 
+        /* ==========================================================================
+        MODULE ANIME SCORE STAR DISPLAY (Exécuté sur anilist.co via manifest)
+        ========================================================================== */
+
+        // Tu peux changer 'star' par 'heart' si tu préfères des cœurs
+        const DISPLAY_MODE = 'heart'; 
+
+        function getScoreColor(score) {
+            if (score >= 90) return { border: '#00ffff', fill: '#00ffff' }; // Bleu AniList
+            if (score >= 75) return { border: '#3ecf8e', fill: '#3ecf8e' }; // Vert AniList
+            if (score >= 60) return { border: '#fea043', fill: '#fea043' }; // Orange
+            if (score >= 40) return { border: '#ffeb3b', fill: '#ffeb3b' }; // Jaune
+            return { border: '#f44336', fill: '#f44336' }; // Rouge
+        }
+
+        // Génère le SVG d'une étoile ou d'un cœur partiellement/totalement rempli(e)
+        function createPartialIconSVG(fillPercent, color, mode = 'star') {
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("viewBox", "0 0 24 24");
+            svg.setAttribute("width", "18");
+            svg.setAttribute("height", "18");
+            svg.style.display = "block";
+
+            const pathData = mode === 'heart'
+                ? "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                : "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z";
+
+            // Gradient unique pour gérer le remplissage exact (ex: 40% rempli, 60% vide)
+            const gradId = `grad-${Math.random().toString(36).substr(2, 9)}`;
+            svg.innerHTML = `
+                <defs>
+                    <linearGradient id="${gradId}">
+                        <stop offset="${fillPercent}%" stop-color="${color}" />
+                        <stop offset="${fillPercent}%" stop-color="rgba(255, 255, 255, 0.15)" />
+                    </linearGradient>
+                </defs>
+                <path d="${pathData}" fill="url(#${gradId})" />
+            `;
+            return svg;
+        }
+
+        function injectScoreBadge() {
+            if (!window.location.pathname.includes('/anime/')) return;
+            if (document.getElementById('custom-anime-score-badge')) return;
+
+            const sidebar = document.querySelector('.page-content .sidebar');
+            const rankingsBox = document.querySelector('.page-content .sidebar .rankings');
+
+            if (!sidebar) return;
+
+            let scoreText = null;
+            const dataStats = sidebar.querySelectorAll('.data-set');
+            
+            dataStats.forEach(stat => {
+                const type = stat.querySelector('.type');
+                if (type && type.innerText.includes('Average Score')) {
+                    const value = stat.querySelector('.value');
+                    if (value) scoreText = value.innerText.replace('%', '').trim();
+                }
+            });
+
+            if (!scoreText || isNaN(scoreText)) return;
+
+            const score = parseInt(scoreText, 10); // ex: 84 (%)
+            const colors = getScoreColor(score);
+            
+            // Convertit la note sur 100 en un total sur 5 icônes (ex: 84% -> 4.2 icônes)
+            const ratingOutOf5 = (score / 100) * 5;
+
+            // Conteneur du badge
+            const container = document.createElement('div');
+            container.id = 'custom-anime-score-badge';
+            container.style.cssText = `
+                background: rgb(21, 31, 46);
+                border-radius: 6px;
+                padding: 12px 16px;
+                margin-top: 16px;
+                margin-bottom: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+                font-family: Overpass, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;
+                border-left: 4px solid ${colors.border};
+            `;
+
+            // Libellé à gauche
+            const leftBox = document.createElement('div');
+            leftBox.style.cssText = 'display: flex; flex-direction: column; gap: 2px;';
+            leftBox.innerHTML = `
+                <span style="color: rgb(159, 173, 189); font-size: 13px; font-weight: 600;">Score AniList</span>
+                <span style="color: #edf1f5; font-size: 11px; opacity: 0.6;">${score}% (${(ratingOutOf5).toFixed(1)}/5)</span>
+            `;
+
+            // Rangée des 5 étoiles / cœurs à droite
+            const iconsBox = document.createElement('div');
+            iconsBox.style.cssText = 'display: flex; align-items: center; gap: 4px;';
+
+            for (let i = 0; i < 5; i++) {
+                // Calcule le taux de remplissage pour chaque icône (0% à 100%)
+                let fill = 0;
+                if (ratingOutOf5 >= i + 1) {
+                    fill = 100;
+                } else if (ratingOutOf5 > i) {
+                    fill = Math.round((ratingOutOf5 - i) * 100);
+                }
+
+                const iconSVG = createPartialIconSVG(fill, colors.fill, DISPLAY_MODE);
+                iconsBox.appendChild(iconSVG);
+            }
+
+            container.appendChild(leftBox);
+            container.appendChild(iconsBox);
+
+            if (rankingsBox) {
+                sidebar.insertBefore(container, rankingsBox);
+            } else {
+                sidebar.prepend(container);
+            }
+        }
+
         // ==========================================
         // GESTIONNAIRE D'EVENEMENTS ET ROUTAGE
         // ==========================================
+        let lastUrl = location.href;
 
         function routeHandler() {
             const path = location.pathname;
             if (path.match(/\/anime\/(\d+)/)) { 
-                injectDetailBlocks(); 
+                if (location.href !== lastUrl) {
+                    lastUrl = location.href;
+                    const oldBadge = document.getElementById('custom-anime-score-badge');
+                    if (oldBadge) oldBadge.remove();
+                }
+                injectScoreBadge();
+                injectDetailBlocks();
             } else if (path.includes('/animelist')) { 
                 processListCards(); 
                 processCustomListIndicators(); 
@@ -743,6 +871,7 @@
             
             initGlobalNotifications(); 
         }
+
 
         const observer = new MutationObserver(() => { routeHandler(); });
         observer.observe(document.body, { childList: true, subtree: true });
