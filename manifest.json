@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AniList Tweaks",
-  "version": "6.5.19",
+  "version": "6.5.20",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvgOcZB86P4L9McsaI8BpGdEhOY9J1jahgQ3QvRcW8/6no/Leo+m1FQY9Riu11sgInUcFZ1pj09Z6xJpWw7FlEFBz26gtKvhwuo+Y+m1LlI23dqWyjDxgrPyGG7Qp9d5eyCp+wTyae3CLnHBhwYemnnDvpLpiuH4dF4iJRKqmHb2QTu5p/Atbc+wqyVRXC1VwwWicGsxCFrvoWL3UdxaWMsYFYcqc43Bgg30HF1CCAghTOB5VYcpEqNeqqTs/XbPf6XdW5uVNBk0UEdHZtASjYeAWwzee7/gFaLOLnBElIkNBKC8jlg/0X+1J8g5s0Z/Kh0NLgsell10CVw5UMvDeFwIDAQAB",
   "description": "Améliorations AniList, Automatisation MalSync, Sync Vidéo, Plateformes, Navigation et Boutons de Recherche.",
   "permissions": [

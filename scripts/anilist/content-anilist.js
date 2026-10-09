@@ -548,27 +548,7 @@
             });
         }
 
-        function injectDetailBlocks() {
-            if (location.pathname !== lastPathname) {
-                const oldGenres = document.getElementById('custom-quick-genres');
-                const oldDate = document.getElementById('custom-completion-date');
-                if (oldGenres) oldGenres.remove(); if (oldDate) oldDate.remove();
-                lastPathname = location.pathname; hasFetchedForCurrentMedia = false; cachedCompletionDate = null;
-                hasFetchedAnilistData = false; cachedRewatchCount = 0;
-            }
-
-            const match = location.pathname.match(/\/anime\/(\d+)/);
-            if (!match) return;
-            const mediaId = match[1];
-
-            if (!hasFetchedForCurrentMedia) fetchSingleCompletionDate(mediaId);
-            if (!hasFetchedAnilistData) fetchAnilistEntryData(mediaId);
-
-            const relationsBlock = document.querySelector('.relations.small') || document.querySelector('.relations');
-            if (!relationsBlock) return;
-
-            // Mapping dynamique des icônes SVG et des couleurs par genre
-            const genreStyles = {
+        const genreStyles = {
                 'Action': { color: '#f44336', icon: '<path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z"/>' }, // Bouclier
                 'Adventure': { color: '#ff9800', icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>' }, // Boussole/Globe
                 'Comedy': { color: '#ffeb3b', icon: '<path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5-9c.83 0 1.5-.67 1.5-1.5S7.83 8 7 8s-1.5.67-1.5 1.5S6.17 11 7 11zm10 0c.83 0 1.5-.67 1.5-1.5S17.83 8 17 8s-1.5.67-1.5 1.5.67 1.5 1.5 1.5zm-5 6c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>' }, // Smile
@@ -589,87 +569,112 @@
                 'Thriller': { color: '#d50000', icon: '<path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>' } // Danger/Alerte
             };
 
-            const defaultStyle = { color: '#3db4f2', icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>' };
-
-            // --- 1. SECTION GENRES ---
-            if (!document.getElementById('custom-quick-genres')) {
-                const typeElements = Array.from(document.querySelectorAll('.data-set.data-list .type'));
-                const genresHeader = typeElements.find(el => el.textContent.trim() === 'Genres');
-                if (genresHeader) {
-                    const valueContainer = genresHeader.nextElementSibling;
-                    if (valueContainer && valueContainer.classList.contains('value')) {
-                        const genreLinks = Array.from(valueContainer.querySelectorAll('a'));
-                        if (genreLinks.length > 0) {
-                            const cleanGenres = genreLinks.map(link => ({ name: link.textContent.trim(), href: link.getAttribute('href') })).filter(g => g.name !== "");
-                            const container = document.createElement('div'); container.id = 'custom-quick-genres'; container.style.marginBottom = '25px';
-                            const title = document.createElement('h2'); title.textContent = 'Genres'; title.style.fontSize = '1.4rem'; title.style.fontWeight = '700'; title.style.letterSpacing = '0.03em'; title.style.marginBottom = '12px'; title.style.color = 'var(--color-text-main)';
-                            container.appendChild(title);
-                            const tagsList = document.createElement('div'); tagsList.style.display = 'flex'; tagsList.style.flexWrap = 'wrap'; tagsList.style.gap = '8px';
-
-                            cleanGenres.forEach(genre => {
-                                const styleConfig = genreStyles[genre.name] || defaultStyle;
-                                const hexColor = styleConfig.color;
-
-                                const badge = document.createElement('a'); 
-                                badge.href = genre.href; 
-                                badge.style.display = 'inline-flex'; 
-                                badge.style.alignItems = 'center'; 
-                                badge.style.padding = '8px 16px'; 
-                                badge.style.backgroundColor = `${hexColor}1A`; // 10% d'opacité hex (#RRGGBB1A)
-                                badge.style.color = hexColor; 
-                                badge.style.borderRadius = '6px'; 
-                                badge.style.fontSize = '1.3rem'; 
-                                badge.style.fontWeight = '600'; 
-                                badge.style.transition = 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'; 
-                                badge.style.textDecoration = 'none';
-
-                                // Injection de l'icône SVG + texte
-                                badge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24">${styleConfig.icon}</svg>${genre.name}`;
-
-                                badge.addEventListener('mouseenter', () => { 
-                                    badge.style.transform = 'translateY(-2px)'; 
-                                    badge.style.backgroundColor = hexColor; 
-                                    badge.style.color = '#ffffff'; 
-                                    badge.style.boxShadow = `0 4px 12px ${hexColor}4D`; 
-                                });
-                                badge.addEventListener('mouseleave', () => { 
-                                    badge.style.transform = 'translateY(0)'; 
-                                    badge.style.backgroundColor = `${hexColor}1A`; 
-                                    badge.style.color = hexColor; 
-                                    badge.style.boxShadow = 'none'; 
-                                });
-                                tagsList.appendChild(badge);
-                            });
-                            container.appendChild(tagsList); relationsBlock.parentNode.insertBefore(container, relationsBlock);
-                        }
-                    }
-                }
+        function injectDetailBlocks() {
+            if (location.pathname !== lastPathname) {
+                const oldCustomBlock = document.getElementById('custom-details-wrapper');
+                if (oldCustomBlock) oldCustomBlock.remove();
+                
+                lastPathname = location.pathname; 
+                hasFetchedForCurrentMedia = false; 
+                cachedCompletionDate = null;
+                hasFetchedAnilistData = false; 
+                cachedRewatchCount = 0;
             }
 
-            // --- 2. SECTION VISIONNAGE (DATE & REWATCH) ---
-            if (hasFetchedForCurrentMedia && hasFetchedAnilistData && !document.getElementById('custom-completion-date')) {
-                const dateContainer = document.createElement('div'); dateContainer.id = 'custom-completion-date'; dateContainer.style.marginBottom = '25px';
-                const dateTitle = document.createElement('h2'); dateTitle.textContent = 'Visionnage'; dateTitle.style.fontSize = '1.4rem'; dateTitle.style.fontWeight = '700'; dateTitle.style.letterSpacing = '0.03em'; dateTitle.style.marginBottom = '12px'; dateTitle.style.color = 'var(--color-text-main)';
-                dateContainer.appendChild(dateTitle);
-                
-                const badgeWrapper = document.createElement('div');
-                badgeWrapper.style.display = 'flex';
-                badgeWrapper.style.gap = '10px';
-                badgeWrapper.style.flexWrap = 'wrap';
+            const match = location.pathname.match(/\/anime\/(\d+)/);
+            if (!match) return;
+            const mediaId = match[1];
 
-                const dateBadge = document.createElement('div'); dateBadge.style.display = 'inline-flex'; dateBadge.style.alignItems = 'center'; dateBadge.style.padding = '8px 16px'; dateBadge.style.borderRadius = '6px'; dateBadge.style.fontSize = '1.3rem'; dateBadge.style.fontWeight = '600';
+            if (!hasFetchedForCurrentMedia) fetchSingleCompletionDate(mediaId);
+            if (!hasFetchedAnilistData) fetchAnilistEntryData(mediaId);
+
+            const relationsBlock = document.querySelector('.relations.small') || document.querySelector('.relations');
+            if (!relationsBlock) return;
+
+            // On attend que les données Supabase et AniList soient chargées
+            if (hasFetchedForCurrentMedia && hasFetchedAnilistData && !document.getElementById('custom-details-wrapper')) {
+                
+                const mainWrapper = document.createElement('div');
+                mainWrapper.id = 'custom-details-wrapper';
+                mainWrapper.style.marginBottom = '25px';
+
+                // =============================================================
+                // LIGNE 1 : STATUS & VISIONNAGE
+                // =============================================================
+                const line1 = document.createElement('div');
+                line1.style.marginBottom = '20px';
+
+                const line1Title = document.createElement('h2');
+                line1Title.textContent = 'Informations & Visionnage';
+                line1Title.style.fontSize = '1.4rem';
+                line1Title.style.fontWeight = '700';
+                line1Title.style.letterSpacing = '0.03em';
+                line1Title.style.marginBottom = '12px';
+                line1Title.style.color = 'var(--color-text-main)';
+                line1.appendChild(line1Title);
+
+                const line1Badges = document.createElement('div');
+                line1Badges.style.display = 'flex';
+                line1Badges.style.gap = '10px';
+                line1Badges.style.flexWrap = 'wrap';
+
+                // 1. Badge Status
+                let statusText = '';
+                const typeElements = Array.from(document.querySelectorAll('.data-set.data-list .type, .data-set .type'));
+                const statusHeader = typeElements.find(el => el.textContent.trim() === 'Status');
+                if (statusHeader && statusHeader.nextElementSibling) {
+                    statusText = statusHeader.nextElementSibling.textContent.trim();
+                }
+
+                if (statusText) {
+                    const statusBadge = document.createElement('div');
+                    statusBadge.style.display = 'inline-flex';
+                    statusBadge.style.alignItems = 'center';
+                    statusBadge.style.padding = '8px 16px';
+                    statusBadge.style.borderRadius = '6px';
+                    statusBadge.style.fontSize = '1.3rem';
+                    statusBadge.style.fontWeight = '600';
+
+                    // Couleurs et icônes selon le statut AniList
+                    if (statusText.toLowerCase().includes('finished')) {
+                        statusBadge.style.backgroundColor = 'rgba(61, 180, 242, 0.1)';
+                        statusBadge.style.color = '#3db4f2';
+                        statusBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> Terminé (${statusText})`;
+                    } else if (statusText.toLowerCase().includes('releasing')) {
+                        statusBadge.style.backgroundColor = 'rgba(62, 207, 142, 0.1)';
+                        statusBadge.style.color = '#3ECF8E';
+                        statusBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> En cours (${statusText})`;
+                    } else {
+                        statusBadge.style.backgroundColor = 'rgba(255, 152, 0, 0.1)';
+                        statusBadge.style.color = '#ff9800';
+                        statusBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg> ${statusText}`;
+                    }
+                    line1Badges.appendChild(statusBadge);
+                }
+
+                // 2. Badge Date de Visionnage
+                const dateBadge = document.createElement('div');
+                dateBadge.style.display = 'inline-flex';
+                dateBadge.style.alignItems = 'center';
+                dateBadge.style.padding = '8px 16px';
+                dateBadge.style.borderRadius = '6px';
+                dateBadge.style.fontSize = '1.3rem';
+                dateBadge.style.fontWeight = '600';
 
                 if (cachedCompletionDate) {
                     const cachedCompletionDateStr = cachedCompletionDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
                     const daysCount = dateGapToday(cachedCompletionDate);
-                    dateBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg> Terminé le ${cachedCompletionDateStr} (${daysCount}j)`;
-                    dateBadge.style.backgroundColor = 'rgba(62, 207, 142, 0.1)'; dateBadge.style.color = '#3ECF8E';
+                    dateBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg> Vu le ${cachedCompletionDateStr} (${daysCount}j)`;
+                    dateBadge.style.backgroundColor = 'rgba(62, 207, 142, 0.1)';
+                    dateBadge.style.color = '#3ECF8E';
                 } else {
-                    dateBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg> Date pas encore enregistrée`;
-                    dateBadge.style.backgroundColor = 'rgba(225, 51, 51, 0.1)'; dateBadge.style.color = '#e13333';
+                    dateBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg> Pas de date enregistrée`;
+                    dateBadge.style.backgroundColor = 'rgba(225, 51, 51, 0.1)';
+                    dateBadge.style.color = '#e13333';
                 }
-                badgeWrapper.appendChild(dateBadge);
+                line1Badges.appendChild(dateBadge);
 
+                // 3. Badge Rewatch
                 if (cachedRewatchCount > 0) {
                     const rewatchBadge = document.createElement('div');
                     rewatchBadge.style.display = 'inline-flex';
@@ -678,18 +683,79 @@
                     rewatchBadge.style.borderRadius = '6px';
                     rewatchBadge.style.fontSize = '1.3rem';
                     rewatchBadge.style.fontWeight = '600';
-                    rewatchBadge.style.backgroundColor = 'rgba(156, 39, 176, 0.1)'; 
-                    rewatchBadge.style.color = '#c253d6'; 
-                    
+                    rewatchBadge.style.backgroundColor = 'rgba(156, 39, 176, 0.1)';
+                    rewatchBadge.style.color = '#c253d6';
                     rewatchBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg> ${cachedRewatchCount} Rewatch${cachedRewatchCount > 1 ? 's' : ''}`;
-                    
-                    badgeWrapper.appendChild(rewatchBadge);
+                    line1Badges.appendChild(rewatchBadge);
                 }
 
-                dateContainer.appendChild(badgeWrapper);
+                line1.appendChild(line1Badges);
+                mainWrapper.appendChild(line1);
 
-                const genresBlock = document.getElementById('custom-quick-genres');
-                if (genresBlock) { genresBlock.parentNode.insertBefore(dateContainer, genresBlock); } else { relationsBlock.parentNode.insertBefore(dateContainer, relationsBlock); }
+                // =============================================================
+                // LIGNE 2 : GENRES
+                // =============================================================
+                const genreHeader = typeElements.find(el => el.textContent.trim() === 'Genres');
+                if (genreHeader && genreHeader.nextElementSibling) {
+                    const genreLinks = Array.from(genreHeader.nextElementSibling.querySelectorAll('a'));
+                    if (genreLinks.length > 0) {
+                        const cleanGenres = genreLinks.map(link => ({ name: link.textContent.trim(), href: link.getAttribute('href') })).filter(g => g.name !== "");
+                        
+                        const line2 = document.createElement('div');
+                        const line2Title = document.createElement('h2');
+                        line2Title.textContent = 'Genres';
+                        line2Title.style.fontSize = '1.4rem';
+                        line2Title.style.fontWeight = '700';
+                        line2Title.style.letterSpacing = '0.03em';
+                        line2Title.style.marginBottom = '12px';
+                        line2Title.style.color = 'var(--color-text-main)';
+                        line2.appendChild(line2Title);
+
+                        const tagsList = document.createElement('div');
+                        tagsList.style.display = 'flex';
+                        tagsList.style.flexWrap = 'wrap';
+                        tagsList.style.gap = '8px';
+
+                        cleanGenres.forEach(genre => {
+                            const styleConfig = genreStyles[genre.name] || defaultStyle;
+                            const hexColor = styleConfig.color;
+
+                            const badge = document.createElement('a');
+                            badge.href = genre.href;
+                            badge.style.display = 'inline-flex';
+                            badge.style.alignItems = 'center';
+                            badge.style.padding = '8px 16px';
+                            badge.style.backgroundColor = `${hexColor}1A`;
+                            badge.style.color = hexColor;
+                            badge.style.borderRadius = '6px';
+                            badge.style.fontSize = '1.3rem';
+                            badge.style.fontWeight = '600';
+                            badge.style.transition = 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+                            badge.style.textDecoration = 'none';
+                            badge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24">${styleConfig.icon}</svg>${genre.name}`;
+
+                            badge.addEventListener('mouseenter', () => {
+                                badge.style.transform = 'translateY(-2px)';
+                                badge.style.backgroundColor = hexColor;
+                                badge.style.color = '#ffffff';
+                                badge.style.boxShadow = `0 4px 12px ${hexColor}4D`;
+                            });
+                            badge.addEventListener('mouseleave', () => {
+                                badge.style.transform = 'translateY(0)';
+                                badge.style.backgroundColor = `${hexColor}1A`;
+                                badge.style.color = hexColor;
+                                badge.style.boxShadow = 'none';
+                            });
+                            tagsList.appendChild(badge);
+                        });
+
+                        line2.appendChild(tagsList);
+                        mainWrapper.appendChild(line2);
+                    }
+                }
+
+                // Insertion globale dans la page
+                relationsBlock.parentNode.insertBefore(mainWrapper, relationsBlock);
             }
         }
 
