@@ -140,11 +140,11 @@
 
                 if (data && data.data && data.data.MediaList) {
                     const entry = data.data.MediaList;
-                    let customLists = entry.customLists || {};
+                    let customListsObj = entry.customLists || {};
 
-                    // Si l'anime est coché dans la liste cible (ex: true)
-                    if (customLists[REMOVE_LIST] === true) {
-                        customLists[REMOVE_LIST] = false; // On le retire de la liste
+                    // Si l'anime est coché dans la liste cible
+                    if (customListsObj[REMOVE_LIST] === true) {
+                        const activeCustomLists = Object.keys(customListsObj).filter(listName => customListsObj[listName] === true && listName !== REMOVE_LIST);
 
                         // 2. On envoie la mutation GraphQL avec l'en-tête d'authentification
                         const mutation = `
@@ -155,7 +155,7 @@
                                 }
                             }
                         `;
-                        
+
                         const mutRes = await fetch('https://graphql.anilist.co', {
                             method: 'POST',
                             headers: { 
@@ -167,7 +167,7 @@
                                 query: mutation,
                                 variables: {
                                     mediaId: mediaId,
-                                    customLists: customLists
+                                    customLists: activeCustomLists
                                 }
                             })
                         });
