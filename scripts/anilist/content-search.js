@@ -10,7 +10,7 @@
             name: 'MyAnimeList',
             color: '#2e51a2',
             domain: 'https://myanimelist.net',
-            keywords: ['myanimelist', 'mal'],
+            anilist_api : 'idMal'
         },
         {
             name: 'Anime News Network',
@@ -76,7 +76,39 @@
         }, 300);
     }
 
-    function buildSearchHub(sidebar, rankingsBox, animeTitle) {
+    function getAnilistIdFromUrl() {
+        const match = window.location.pathname.match(/\/anime\/(\d+)/) || window.location.pathname.match(/\/manga\/(\d+)/);
+        if (match) {
+            return parseInt(match[1]);
+        }
+    }
+
+    async function fetchAnilistData(anilistId, field) {
+        const query = `
+            query ($id: Int) {
+                Media(id: $id) {
+                    ${field}
+                }
+            }
+        `;
+
+        const response = await fetch('https://graphql.anilist.co', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+                query,
+                variables: { id: anilistId }
+            })
+        });
+
+        const data = await response.json();
+        return data.data.Media[field];
+    }
+
+    async function buildSearchHub(sidebar, rankingsBox, animeTitle) {
         if (document.getElementById('fr-search-links-hub')) return;
 
         const container = document.createElement('div');
@@ -104,7 +136,7 @@
         const listContainer = document.createElement('div');
         listContainer.style.cssText = 'display: flex; flex-direction: column; gap: 8px;';
 
-        SEARCH_CONFIG.forEach(site => {
+        await Promise.all(SEARCH_CONFIG.map(async site => {
             let finalUrl;
             let isDirectLink = false;
             const iconUrl = `https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=${encodeURIComponent(site.domain)}&size=16`;
@@ -123,6 +155,16 @@
             else if (site.baseUrl) {
                 const queryText = animeTitle + (site.suffix || '');
                 finalUrl = site.baseUrl + encodeURIComponent(queryText);
+            }
+            else if (site.anilist_api) {
+                const anilistId = getAnilistIdFromUrl();
+                if (anilistId) {
+                    const idMal = await fetchAnilistData(anilistId, site.anilist_api);
+                    if (idMal) {
+                        finalUrl = `${site.domain}/anime/${idMal}`;
+                        isDirectLink = true;
+                    }
+                }
             }
 
             if (finalUrl) {
@@ -162,7 +204,7 @@
 
                 listContainer.appendChild(btn);
             }
-        });
+        }));
 
         container.appendChild(listContainer);
 
