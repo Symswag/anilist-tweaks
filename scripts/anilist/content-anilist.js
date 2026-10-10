@@ -930,7 +930,16 @@
                 }
                 injectScoreBadge();
                 injectDetailBlocks();
-            } else if (path.includes('/animelist')) { 
+            }
+            else
+            {
+                const oldBadge = document.getElementById('custom-anime-score-badge');
+                if (oldBadge) oldBadge.remove();
+                const oldCustomBlock = document.getElementById('custom-details-wrapper');
+                if (oldCustomBlock) oldCustomBlock.remove();
+            } 
+            
+            if (path.includes('/animelist')) { 
                 processListCards(); 
                 processCustomListIndicators(); 
             }

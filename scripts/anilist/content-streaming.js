@@ -204,6 +204,10 @@
             if (window.location.pathname.includes('/anime/')) {
                 init(true);
             }
+            else {
+                const oldContainer = document.getElementById('fr-streaming-platforms');
+                if (oldContainer) oldContainer.remove();
+            }
         }
     });
     observer.observe(document.body, { childList: true, subtree: true });

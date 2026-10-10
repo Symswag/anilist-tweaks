@@ -37,7 +37,7 @@
     let waitForElements = null;
 
     function init(forceReset = false) {
-        const match = window.location.pathname.match(/\/anime\/(\d+)/);
+        const match = window.location.pathname.match(/\/anime\/(\d+)/) || window.location.pathname.match(/\/manga\/(\d+)/);
         if (!match) return;
 
         const animeId = parseInt(match[1]);
@@ -183,7 +183,7 @@
     const observer = new MutationObserver(() => {
         if (window.location.href !== lastUrl) {
             lastUrl = window.location.href;
-            if (window.location.pathname.includes('/anime/')) {
+            if (window.location.pathname.includes('/anime/') || window.location.pathname.includes('/manga/')) {
                 init(true);
             }
         }
