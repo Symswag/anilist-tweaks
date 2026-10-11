@@ -6,6 +6,32 @@
        ========================================================================== */
     const STREAMING_CONFIG = [
         {
+            name: 'WatchHentai',
+            color: '#fcb900',
+            keywords: [],
+            domain: 'https://watchhentai.net',
+            searchUrl: 'https://watchhentai.net/?s=',
+            activationCondition: () => {
+                const typeElements = Array.from(document.querySelectorAll('.data-set.data-list .type, .data-set .type'));
+                const genreHeader = typeElements.find(el => el.textContent.trim() === 'Genres');
+                if (genreHeader && genreHeader.nextElementSibling){
+                    const genreLinks = Array.from(genreHeader.nextElementSibling.querySelectorAll('a'));
+                    if (genreLinks.length > 0) if (genreLinks.map(link => ({ name: link.textContent.trim()})).filter(g => g.name === "Hentai").length > 0) return true;
+                }
+                return false;
+            },
+            animeTitle: () => {
+                const typeElements = Array.from(document.querySelectorAll('.data-set.data-list .type, .data-set .type'));
+                const nativeHeader = typeElements.find(el => el.textContent.trim() === 'Native');
+                if (nativeHeader && nativeHeader.nextElementSibling){
+                    const nativeTitle = nativeHeader.nextElementSibling.textContent.trim();
+                    console.log(nativeTitle);
+                    return nativeTitle;
+                }
+                return '';
+            }
+        },
+        {
             name: 'Crunchyroll',
             color: '#ff6600',
             keywords: ['crunchyroll'],
@@ -134,6 +160,7 @@
         listContainer.style.cssText = 'display: flex; flex-direction: column; gap: 8px;';
 
         STREAMING_CONFIG.forEach(site => {
+            if (typeof site.activationCondition === 'function' && !site.activationCondition()) return;
             let finalUrl = '';
             let isDirectLink = false;
             const iconUrl = `https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=${encodeURIComponent(site.domain)}&size=16`;
@@ -142,7 +169,9 @@
                 site.keywords.some(keyword => url.includes(keyword))
             );
 
-            if (directLinkFound) {
+            if (typeof site.animeTitle === 'function'){
+                finalUrl = site.searchUrl + encodeURIComponent(site.animeTitle());
+            } else if (directLinkFound) {
                 finalUrl = directLinkFound;
                 isDirectLink = true;
             } else if (site.searchUrl) {
