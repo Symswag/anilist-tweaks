@@ -548,6 +548,50 @@
             });
         }
 
+        // Pour une valeur unique (Format, Épisodes, Statut, Studio principal...)
+        function getSidebarDataValue(label) {
+            const typeElements = Array.from(document.querySelectorAll('.data-set .type'));
+            const header = typeElements.find(el => el.textContent.trim().toLowerCase() === label.toLowerCase());
+
+            if (header && header.nextElementSibling) {
+                const link = header.nextElementSibling.querySelector('a');
+                if (link) {
+                    return { value: link.textContent.trim(), href: link.getAttribute('href') };
+                }
+                return { value: header.nextElementSibling.textContent.trim(), href: null };
+            }
+
+            return null;
+        }
+
+        // Pour des valeurs multiples (Genres, Tags, Synonymes, Producteurs...)
+        function getSidebarDataValues(label) {
+            const typeElements = Array.from(document.querySelectorAll('.data-set .type'));
+            const header = typeElements.find(el => el.textContent.trim().toLowerCase() === label.toLowerCase());
+
+            if (header && header.nextElementSibling) {
+                const valueContainer = header.nextElementSibling;
+
+                // 1. Recherche des liens <a>
+                const links = Array.from(valueContainer.querySelectorAll('a'));
+                if (links.length > 0) {
+                    return links
+                        .map(link => ({ value: link.textContent.trim(), href: link.getAttribute('href') || '' }))
+                        .filter(item => item.value !== '');
+                }
+
+                // 2. Recherche des <span> (ex: Synonymes ou Tags sans liens)
+                const spans = Array.from(valueContainer.querySelectorAll('span'));
+                if (spans.length > 0) {
+                    return spans
+                        .map(span => ({ value: span.textContent.trim(), href: null }))
+                        .filter(item => item.value !== '');
+                }
+            }
+
+            return null;
+        }
+
         const genreStyles = {
                 'Action': { color: '#f44336', icon: '<path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z"/>' }, // Bouclier
                 'Adventure': { color: '#ff9800', icon: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>' }, // Boussole/Globe
@@ -621,14 +665,9 @@
                 line1Badges.style.flexWrap = 'wrap';
 
                 // 1. Badge Status
-                let statusText = '';
-                const typeElements = Array.from(document.querySelectorAll('.data-set.data-list .type, .data-set .type'));
-                const statusHeader = typeElements.find(el => el.textContent.trim() === 'Status');
-                if (statusHeader && statusHeader.nextElementSibling) {
-                    statusText = statusHeader.nextElementSibling.textContent.trim();
-                }
+                const status = getSidebarDataValue('Status');
 
-                if (statusText) {
+                if (status) {
                     const statusBadge = document.createElement('div');
                     statusBadge.style.display = 'inline-flex';
                     statusBadge.style.alignItems = 'center';
@@ -638,23 +677,40 @@
                     statusBadge.style.fontWeight = '600';
 
                     // Couleurs et icônes selon le statut AniList
-                    if (statusText.toLowerCase().includes('finished')) {
+                    if (status.value.toLowerCase().includes('finished')) {
                         statusBadge.style.backgroundColor = 'rgba(61, 180, 242, 0.1)';
                         statusBadge.style.color = '#3db4f2';
-                        statusBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> <span style="display: inline-block; line-height: 1;">Terminé (${statusText})</span>`;
-                    } else if (statusText.toLowerCase().includes('releasing')) {
+                        statusBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> <span style="display: inline-block; line-height: 1;">Terminé (${status.value})</span>`;
+                    } else if (status.value.toLowerCase().includes('releasing')) {
                         statusBadge.style.backgroundColor = 'rgba(62, 207, 142, 0.1)';
                         statusBadge.style.color = '#3ECF8E';
-                        statusBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> <span style="display: inline-block; line-height: 1;">En cours (${statusText})</span>`;
+                        statusBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> <span style="display: inline-block; line-height: 1;">En cours (${status.value})</span>`;
                     } else {
                         statusBadge.style.backgroundColor = 'rgba(255, 152, 0, 0.1)';
                         statusBadge.style.color = '#ff9800';
-                        statusBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg> <span style="display: inline-block; line-height: 1;">${statusText}</span>`;
+                        statusBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg> <span style="display: inline-block; line-height: 1;">${status.value}</span>`;
                     }
                     line1Badges.appendChild(statusBadge);
                 }
 
-                // 2. Badge Date de Visionnage
+                // 2. Badge NbEpisodes
+                const nbEpisode = getSidebarDataValue('Episodes');
+
+                if (nbEpisode) {
+                    const nbEpBadge = document.createElement('div');
+                    nbEpBadge.style.display = 'inline-flex';
+                    nbEpBadge.style.alignItems = 'center';
+                    nbEpBadge.style.padding = '8px 16px';
+                    nbEpBadge.style.borderRadius = '6px';
+                    nbEpBadge.style.fontSize = '1.3rem';
+                    nbEpBadge.style.fontWeight = '600';
+                    nbEpBadge.style.backgroundColor = 'rgba(245, 166, 35, 0.15)';
+                    nbEpBadge.style.color = '#f5a623';
+                    nbEpBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg> <span style="display: inline-block; line-height: 1;">${nbEpisode.value} Episode${nbEpisode.value > 1 ? 's' : ''}</span>`;
+                    line1Badges.appendChild(nbEpBadge);
+                }
+
+                // 3. Badge Date de Visionnage
                 const dateBadge = document.createElement('div');
                 dateBadge.style.display = 'inline-flex';
                 dateBadge.style.alignItems = 'center';
@@ -697,65 +753,59 @@
                 // =============================================================
                 // LIGNE 2 : GENRES
                 // =============================================================
-                const genreHeader = typeElements.find(el => el.textContent.trim() === 'Genres');
-                if (genreHeader && genreHeader.nextElementSibling) {
-                    const genreLinks = Array.from(genreHeader.nextElementSibling.querySelectorAll('a'));
-                    if (genreLinks.length > 0) {
-                        const cleanGenres = genreLinks.map(link => ({ name: link.textContent.trim(), href: link.getAttribute('href') })).filter(g => g.name !== "");
-                        
-                        const line2 = document.createElement('div');
-                        const line2Title = document.createElement('h2');
-                        line2Title.textContent = 'Genres';
-                        line2Title.style.fontSize = '1.4rem';
-                        line2Title.style.fontWeight = '700';
-                        line2Title.style.letterSpacing = '0.03em';
-                        line2Title.style.marginBottom = '12px';
-                        line2Title.style.color = 'var(--color-text-main)';
-                        line2.appendChild(line2Title);
+                const genres = getSidebarDataValues('Genres');
+                
+                const line2 = document.createElement('div');
+                const line2Title = document.createElement('h2');
+                line2Title.textContent = 'Genres';
+                line2Title.style.fontSize = '1.4rem';
+                line2Title.style.fontWeight = '700';
+                line2Title.style.letterSpacing = '0.03em';
+                line2Title.style.marginBottom = '12px';
+                line2Title.style.color = 'var(--color-text-main)';
+                line2.appendChild(line2Title);
 
-                        const tagsList = document.createElement('div');
-                        tagsList.style.display = 'flex';
-                        tagsList.style.flexWrap = 'wrap';
-                        tagsList.style.gap = '8px';
+                const tagsList = document.createElement('div');
+                tagsList.style.display = 'flex';
+                tagsList.style.flexWrap = 'wrap';
+                tagsList.style.gap = '8px';
 
-                        cleanGenres.forEach(genre => {
-                            const styleConfig = genreStyles[genre.name] || defaultStyle;
-                            const hexColor = styleConfig.color;
+                genres.forEach(genre => {
+                    const styleConfig = genreStyles[genre.value] || defaultStyle;
+                    const hexColor = styleConfig.color;
 
-                            const badge = document.createElement('a');
-                            badge.href = genre.href;
-                            badge.style.display = 'inline-flex';
-                            badge.style.alignItems = 'center';
-                            badge.style.padding = '8px 16px';
-                            badge.style.backgroundColor = `${hexColor}1A`;
-                            badge.style.color = hexColor;
-                            badge.style.borderRadius = '6px';
-                            badge.style.fontSize = '1.3rem';
-                            badge.style.fontWeight = '600';
-                            badge.style.transition = 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
-                            badge.style.textDecoration = 'none';
-                            badge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24">${styleConfig.icon}</svg>${genre.name}`;
+                    const badge = document.createElement('a');
+                    badge.href = genre.href;
+                    badge.style.display = 'inline-flex';
+                    badge.style.alignItems = 'center';
+                    badge.style.padding = '8px 16px';
+                    badge.style.backgroundColor = `${hexColor}1A`;
+                    badge.style.color = hexColor;
+                    badge.style.borderRadius = '6px';
+                    badge.style.fontSize = '1.3rem';
+                    badge.style.fontWeight = '600';
+                    badge.style.transition = 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+                    badge.style.textDecoration = 'none';
+                    badge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24">${styleConfig.icon}</svg>${genre.value}`;
 
-                            badge.addEventListener('mouseenter', () => {
-                                badge.style.transform = 'translateY(-2px)';
-                                badge.style.backgroundColor = hexColor;
-                                badge.style.color = '#ffffff';
-                                badge.style.boxShadow = `0 4px 12px ${hexColor}4D`;
-                            });
-                            badge.addEventListener('mouseleave', () => {
-                                badge.style.transform = 'translateY(0)';
-                                badge.style.backgroundColor = `${hexColor}1A`;
-                                badge.style.color = hexColor;
-                                badge.style.boxShadow = 'none';
-                            });
-                            tagsList.appendChild(badge);
-                        });
+                    badge.addEventListener('mouseenter', () => {
+                        badge.style.transform = 'translateY(-2px)';
+                        badge.style.backgroundColor = hexColor;
+                        badge.style.color = '#ffffff';
+                        badge.style.boxShadow = `0 4px 12px ${hexColor}4D`;
+                    });
+                    badge.addEventListener('mouseleave', () => {
+                        badge.style.transform = 'translateY(0)';
+                        badge.style.backgroundColor = `${hexColor}1A`;
+                        badge.style.color = hexColor;
+                        badge.style.boxShadow = 'none';
+                    });
+                    tagsList.appendChild(badge);
+                });
 
-                        line2.appendChild(tagsList);
-                        mainWrapper.appendChild(line2);
-                    }
-                }
-
+                line2.appendChild(tagsList);
+                mainWrapper.appendChild(line2);
+                
                 // Insertion globale dans la page
                 relationsBlock.parentNode.insertBefore(mainWrapper, relationsBlock);
             }

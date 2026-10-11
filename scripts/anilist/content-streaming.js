@@ -125,7 +125,7 @@
      * Récupère le titre principal de l'anime
      */
     function getAnimeTitleFromDOM() {
-        return getSidebarDataValue("English");
+        return getSidebarDataValue("English") || getSidebarDataValue("Romaji");
     }
 
     /**
@@ -228,10 +228,10 @@
             }
 
             if (typeof site.getUrl !== 'function') return;
-
+            
             const result = site.getUrl(context);
             if (!result || !result.url) return;
-
+            
             const btn = createLinkButton(site, result);
             listContainer.appendChild(btn);
         });
