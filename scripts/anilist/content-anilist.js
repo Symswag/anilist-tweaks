@@ -804,10 +804,10 @@
         const DISPLAY_MODE = 'heart'; 
 
         function getScoreColor(score) {
-            if (score >= 90) return { border: '#00ffff', fill: '#00ffff' }; // Bleu AniList
-            if (score >= 75) return { border: '#3ecf8e', fill: '#3ecf8e' }; // Vert AniList
-            if (score >= 60) return { border: '#fea043', fill: '#fea043' }; // Orange
-            if (score >= 40) return { border: '#ffeb3b', fill: '#ffeb3b' }; // Jaune
+            if (score >= 80) return { border: '#00ffff', fill: '#00ffff' }; // Bleu AniList
+            if (score >= 60) return { border: '#3ecf8e', fill: '#3ecf8e' }; // Vert AniList
+            if (score >= 40) return { border: '#fea043', fill: '#fea043' }; // Orange
+            if (score >= 20) return { border: '#ffeb3b', fill: '#ffeb3b' }; // Jaune
             return { border: '#f44336', fill: '#f44336' }; // Rouge
         }
 
