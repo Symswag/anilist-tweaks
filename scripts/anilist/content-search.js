@@ -7,6 +7,7 @@
 
     const SEARCH_CONFIG = [
         {
+            order: 0,
             name: 'MyAnimeList',
             color: '#2e51a2',
             domain: 'https://myanimelist.net',
@@ -22,6 +23,7 @@
             }
         },
         {
+            order: 3,
             name: 'Anime News Network',
             color: '#0055a5',
             domain: 'https://www.animenewsnetwork.com',
@@ -34,6 +36,7 @@
             }
         },
         {
+            order: 2,
             name: 'Nautiljon',
             color: '#ecb044',
             domain: 'https://www.nautiljon.com',
@@ -46,6 +49,7 @@
             }
         },
         {
+            order: 1,
             name: 'Fandom Wiki',
             color: '#fa005a',
             domain: 'https://www.fandom.com',
@@ -200,7 +204,9 @@
             sidebar
         };
 
-        const buttonPromises = SEARCH_CONFIG.map(async site => {
+        const sortedConfig = SEARCH_CONFIG.toSorted((a, b) => a.order - b.order);
+
+        const buttonPromises = sortedConfig.map(async site => {
             if (typeof site.getUrl !== 'function') return null;
             const result = await site.getUrl(context);
             if (!result || !result.url) return null;

@@ -41,6 +41,7 @@
         const MAX_TOASTS = 5;
 
         let cachedRewatchCount = 0;
+        let cachedYearSeason = "";
         let hasFetchedAnilistData = false;
         let isFetchingAnilistData = false;
 
@@ -222,6 +223,7 @@
                 const query = `
                 query ($mediaId: Int, $userName: String) {
                   MediaList(mediaId: $mediaId, userName: $userName) { repeat }
+                  Media(id: $mediaId) { season seasonYear }
                 }`;
                 const variables = { mediaId: parseInt(mediaId), userName: ANILIST_USERNAME };
                 
@@ -231,10 +233,25 @@
                     body: JSON.stringify({ query, variables })
                 });
                 const data = await res.json();
-                if (data && data.data && data.data.MediaList) {
-                    cachedRewatchCount = data.data.MediaList.repeat || 0;
+
+                cachedRewatchCount = data?.data?.MediaList?.repeat || 0;
+
+                const media = data?.data?.Media;
+                if (media) {
+                    const { season, seasonYear } = media;
+
+                    if (season && seasonYear) {
+                        const formattedSeason = season.charAt(0) + season.slice(1).toLowerCase();
+                        cachedYearSeason = `${formattedSeason} ${seasonYear}`;
+                    } else if (seasonYear) {
+                        cachedYearSeason = `${seasonYear}`;
+                    } else if (season) {
+                        cachedYearSeason = season.charAt(0) + season.slice(1).toLowerCase();
+                    } else {
+                        cachedYearSeason = "";
+                    }
                 } else {
-                    cachedRewatchCount = 0;
+                    cachedYearSeason = "";
                 }
             } catch (err) {
                 cachedRewatchCount = 0;
@@ -693,7 +710,40 @@
                     line1Badges.appendChild(statusBadge);
                 }
 
-                // 2. Badge NbEpisodes
+                // 2. Badge Year & Season avec couleur dynamique
+                if (cachedYearSeason) {
+                    // Thèmes par saison
+                    const seasonThemes = {
+                        winter: { bg: 'rgba(58, 191, 216, 0.15)', text: '#3abfd8' }, // Bleu glacé
+                        spring: { bg: 'rgba(240, 98, 146, 0.15)', text: '#f06292' }, // Rose sakura
+                        summer: { bg: 'rgba(255, 183, 77, 0.15)', text: '#ffb74d' }, // Jaune soleil
+                        fall:   { bg: 'rgba(255, 112, 67, 0.15)', text: '#ff7043' }  // Orange automne
+                    };
+
+                    // Détection de la saison dans la chaîne
+                    const seasonLower = cachedYearSeason.toLowerCase();
+                    let theme = { bg: 'rgba(76, 175, 80, 0.15)', text: '#4caf50' }; // Vert par défaut si année seule
+
+                    if (seasonLower.includes('winter')) theme = seasonThemes.winter;
+                    else if (seasonLower.includes('spring')) theme = seasonThemes.spring;
+                    else if (seasonLower.includes('summer')) theme = seasonThemes.summer;
+                    else if (seasonLower.includes('fall')) theme = seasonThemes.fall;
+
+                    const seasonBadge = document.createElement('div');
+                    seasonBadge.style.display = 'inline-flex';
+                    seasonBadge.style.alignItems = 'center';
+                    seasonBadge.style.padding = '8px 16px';
+                    seasonBadge.style.borderRadius = '6px';
+                    seasonBadge.style.fontSize = '1.3rem';
+                    seasonBadge.style.fontWeight = '600';
+                    seasonBadge.style.backgroundColor = theme.bg;
+                    seasonBadge.style.color = theme.text;
+                    seasonBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg> <span style="display: inline-block; line-height: 1;">${cachedYearSeason}</span>`;
+                    
+                    line1Badges.appendChild(seasonBadge);
+                }
+
+                // 3. Badge NbEpisodes
                 const nbEpisode = getSidebarDataValue('Episodes');
 
                 if (nbEpisode) {
@@ -710,7 +760,7 @@
                     line1Badges.appendChild(nbEpBadge);
                 }
 
-                // 3. Badge Date de Visionnage
+                // 4. Badge Date de Visionnage
                 const dateBadge = document.createElement('div');
                 dateBadge.style.display = 'inline-flex';
                 dateBadge.style.alignItems = 'center';
@@ -732,7 +782,7 @@
                 }
                 line1Badges.appendChild(dateBadge);
 
-                // 3. Badge Rewatch
+                // 5. Badge Rewatch
                 if (cachedRewatchCount > 0) {
                     const rewatchBadge = document.createElement('div');
                     rewatchBadge.style.display = 'inline-flex';
