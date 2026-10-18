@@ -88,6 +88,7 @@
             domain: 'https://franime.fr',
             searchUrl: 'https://franime.fr/recherche?search='
         })
+
     ];
 
     let currentAnimeId = null;

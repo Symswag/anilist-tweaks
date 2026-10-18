@@ -13,7 +13,8 @@
             domain: 'https://myanimelist.net',
             getUrl: async ({ id, type }) => {
                 if (!id) return null;
-                const idMal = await fetchAnilistData(id, 'idMal');
+                const data = await window.anilistApi.getAnimeData(id);
+                const idMal = data.media?.idMal;
                 if (!idMal) return null;
                 const mediaType = type === 'manga' ? 'manga' : 'anime';
                 return {
@@ -89,39 +90,6 @@
         }
         const mainHeader = document.querySelector('h1');
         return mainHeader ? mainHeader.textContent.trim() : '';
-    }
-
-    /**
-     * Exécute une requête GraphQL vers AniList pour récupérer un champ spécifique
-     */
-    async function fetchAnilistData(anilistId, field) {
-        const query = `
-            query ($id: Int) {
-                Media(id: $id) {
-                    ${field}
-                }
-            }
-        `;
-
-        try {
-            const response = await fetch('https://graphql.anilist.co', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({
-                    query,
-                    variables: { id: anilistId }
-                })
-            });
-
-            const data = await response.json();
-            return data?.data?.Media?.[field] ?? null;
-        } catch (error) {
-            console.error('[Search Hub] Erreur API AniList :', error);
-            return null;
-        }
     }
 
     /**

@@ -220,23 +220,11 @@
             if (isFetchingAnilistData || hasFetchedAnilistData) return;
             isFetchingAnilistData = true;
             try {
-                const query = `
-                query ($mediaId: Int, $userName: String) {
-                  MediaList(mediaId: $mediaId, userName: $userName) { repeat }
-                  Media(id: $mediaId) { season seasonYear }
-                }`;
-                const variables = { mediaId: parseInt(mediaId), userName: ANILIST_USERNAME };
-                
-                const res = await fetch('https://graphql.anilist.co', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                    body: JSON.stringify({ query, variables })
-                });
-                const data = await res.json();
+                const data = await window.anilistApi.getAnimeData(mediaId, ANILIST_USERNAME);
 
-                cachedRewatchCount = data?.data?.MediaList?.repeat || 0;
+                cachedRewatchCount = data?.mediaList?.repeat || 0;
 
-                const media = data?.data?.Media;
+                const media = data?.media;
                 if (media) {
                     const { season, seasonYear } = media;
 
@@ -281,24 +269,9 @@
             if (customListsPromise) return customListsPromise;
 
             customListsPromise = (async () => {
-                const query = `
-                query {
-                  MediaListCollection(userName: "${ANILIST_USERNAME}", type: ANIME) {
-                    lists {
-                      name
-                      entries {
-                        mediaId
-                        media { id status episodes title { userPreferred } coverImage { medium } nextAiringEpisode { episode timeUntilAiring } }
-                      }
-                    }
-                  }
-                }
-                `;
-
                 try {
-                    const res = await fetch('https://graphql.anilist.co', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify({ query }) });
-                    const data = await res.json();
-                    fullListsDataCache = data.data.MediaListCollection.lists;
+                    const data = await window.anilistApi.getUserCollection(ANILIST_USERNAME);
+                    fullListsDataCache = data.lists;
                     
                     fullListsDataCache.forEach(list => {
                         list.entries.forEach(entry => {
@@ -319,7 +292,7 @@
                             });
                         }
                     });
-                } catch (error) {} 
+                } catch (error) {console.error(error)} 
                 
                 customListsPromise = null;
                 return { map: customListsMapCache, fullData: fullListsDataCache };
@@ -754,8 +727,8 @@
                     nbEpBadge.style.borderRadius = '6px';
                     nbEpBadge.style.fontSize = '1.3rem';
                     nbEpBadge.style.fontWeight = '600';
-                    nbEpBadge.style.backgroundColor = 'rgba(245, 166, 35, 0.15)';
-                    nbEpBadge.style.color = '#f5a623';
+                    nbEpBadge.style.backgroundColor = 'rgba(156, 39, 176, 0.15)';
+                    nbEpBadge.style.color = '#9c27b0';
                     nbEpBadge.innerHTML = `<svg style="width: 16px; height: 16px; margin-right: 8px; fill: currentColor;" viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></svg> <span style="display: inline-block; line-height: 1;">${nbEpisode.value} Episode${nbEpisode.value > 1 ? 's' : ''}</span>`;
                     line1Badges.appendChild(nbEpBadge);
                 }

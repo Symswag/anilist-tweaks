@@ -123,28 +123,13 @@
 
             try {
                 // 1. On récupère les listes personnalisées actuelles de l'anime pour l'utilisateur
-                const getMediaListQuery = `
-                    query ($mediaId: Int, $userName: String) {
-                        MediaList(mediaId: $mediaId, userName: $userName) {
-                            id
-                            customLists
-                        }
-                    }
-                `;
-                const res = await fetch('https://graphql.anilist.co', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                    body: JSON.stringify({ query: getMediaListQuery, variables: { mediaId: mediaId, userName: TARGET_USERNAME } })
-                });
-                const data = await res.json();
+                const data = await window.anilistApi.getAnimeData(mediaId);
+                const customLists = data?.mediaList?.customLists;
 
-                if (data && data.data && data.data.MediaList) {
-                    const entry = data.data.MediaList;
-                    let customListsObj = entry.customLists || {};
-
+                if (customLists) {
                     // Si l'anime est coché dans la liste cible
-                    if (customListsObj[REMOVE_LIST] === true) {
-                        const activeCustomLists = Object.keys(customListsObj).filter(listName => customListsObj[listName] === true && listName !== REMOVE_LIST);
+                    if (customLists[REMOVE_LIST] === true) {
+                        const activeCustomLists = Object.keys(customLists).filter(listName => customLists[listName] === true && listName !== REMOVE_LIST);
 
                         // 2. On envoie la mutation GraphQL avec l'en-tête d'authentification
                         const mutation = `
@@ -310,7 +295,6 @@
         if (matchedSite) {
             initVideoWatcher(matchedSite);
         }
-
     });
 
 })();

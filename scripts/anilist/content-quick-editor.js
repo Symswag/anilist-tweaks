@@ -131,50 +131,14 @@
             `;
             document.head.appendChild(style);
 
-            // Récupération de sectionOrder pour garantir l'ordre utilisateur AniList
-            const query = `
-                query ($mediaId: Int) {
-                    Viewer {
-                        id
-                        mediaListOptions {
-                            animeList {
-                                customLists
-                                sectionOrder
-                            }
-                        }
-                    }
-                    Media(id: $mediaId) {
-                        id
-                        episodes
-                        mediaListEntry {
-                            id
-                            status
-                            progress
-                            score(format: POINT_100)
-                            customLists
-                        }
-                    }
-                }
-            `;
-
             try {
-                const res = await fetch('https://graphql.anilist.co', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json', 
-                        'Accept': 'application/json',
-                        'Authorization': `Bearer ${ANILIST_TOKEN}`
-                    },
-                    body: JSON.stringify({ query, variables: { mediaId } })
-                });
-
-                const json = await res.json();
+                const data = await window.anilistApi.getAnimeData(mediaId);
                 
                 const existingEditor = document.getElementById('custom-quick-editor');
                 if (existingEditor) existingEditor.remove();
 
-                const viewer = json?.data?.Viewer;
-                const mediaData = json?.data?.Media;
+                const viewer = data?.viewer;
+                const mediaData = data?.media;
                 const entry = mediaData?.mediaListEntry;
                 entryDataCache = entry; // Mise en cache des données de l'entrée pour une utilisation ultérieure
 
@@ -402,6 +366,13 @@
                     qeWrapper.style.gridTemplateRows = isExpanded ? '1fr' : '0fr';
                     qeArrow.style.transform = isExpanded ? 'rotate(180deg)' : 'rotate(0deg)';
                 });
+
+                if(!entry?.status)
+                {
+                    isExpanded = true;
+                    qeWrapper.style.gridTemplateRows = '1fr';
+                    qeArrow.style.transform = 'rotate(180deg)';
+                }
 
                 progressInputHandler(progInput, totalEpisodes, editorBox);
 
