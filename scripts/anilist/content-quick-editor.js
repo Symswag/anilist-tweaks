@@ -323,6 +323,7 @@
                     let statusVal = editorBox.querySelector('#qe-status').value;
                     if (progressVal === totalEpisodes && totalEpisodes !== '?') {
                         statusVal = 'COMPLETED';
+                        editorBox.querySelector('#qe-status').value = 'COMPLETED';
                     }                    
 
                     const payload = {
