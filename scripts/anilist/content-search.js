@@ -43,8 +43,24 @@
             domain: 'https://www.nautiljon.com',
             getUrl: ({ title }) => {
                 if (!title) return null;
+
+                let cleanTitle = title
+                    // 1. Parenthèses/crochets : (TV), [OVA], etc.
+                    .replace(/\s*[\(\[][^\)\]]*[\)\]]/g, '')
+                    // 2. Sous-titres après deux-points (ex: "Titre: Sous-titre")
+                    .replace(/:\s+.*/, '')
+                    // 3. Tirets séparateurs (ex: "Titre - Arc 2")
+                    .replace(/\s+[-–—]\s+.*/, '')
+                    // 4. Saisons/Parties (ex: "2nd Season", "Second Season", "Season Two", "Part 2")
+                    .replace(/\b((first|second|third|fourth|fifth|final|\d+(st|nd|rd|th)?)\s+season|(the\s+)?final\s+season|season\s+(\d+|one|two|three|four|five)|part\s+(\d+|one|two|three|four|five)|cour\s+(\d+|one|two|three|four|five))\b/gi, '')
+                    // 5. Formats/Type de média (ex: OVA, OAV, ONA, Movie, Special)
+                    .replace(/\b(OVA|OAV|ONA|Movie|Film|Specials?)\b/gi, '')
+                    // 6. Espaces doubles et nettoyage des bordures
+                    .replace(/\s+/g, ' ')
+                    .trim();
+
                 return {
-                    url: `https://www.nautiljon.com/search.php?q=${encodeURIComponent(title)}`,
+                    url: `https://www.nautiljon.com/search.php?q=${encodeURIComponent(cleanTitle)}&st=2e6b850a4332ca60033eba1754aa0b1f`,
                     isDirect: false
                 };
             }
