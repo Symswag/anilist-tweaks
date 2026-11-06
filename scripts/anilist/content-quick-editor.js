@@ -12,10 +12,12 @@
         anilistUsername: '',
         spinnerDuration: 3,
         removeList: 'Close At Hand',
-        anilistToken: ''
+        anilistToken: '',
+        isExpandedByDefault: false
     }, function(config) {
 
         const ANILIST_TOKEN = config.anilistToken;
+        let isExpanded = config.isExpandedByDefault; // Utilise la valeur configurée
 
         if (!ANILIST_TOKEN) {
             console.warn("⚡ Quick Editor : Aucun token AniList configuré.");
@@ -89,7 +91,6 @@
         }
 
         let entryDataCache = null;
-        let isExpanded = false; // Fermé par défaut
 
         async function injectQuickEditor() {
             if (!window.location.pathname.includes('/anime/')) {

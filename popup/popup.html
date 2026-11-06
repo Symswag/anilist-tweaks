@@ -91,6 +91,55 @@
             margin-top: 0;
         }
 
+#isExpandedByDefault {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 38px;
+    height: 20px;
+    background-color: #11161d;
+    border: 1px solid #2e3c4e;
+    border-radius: 20px;
+    cursor: pointer;
+    outline: none;
+    position: relative;
+    vertical-align: middle;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* La pastille mobile */
+#isExpandedByDefault::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    background-color: #9fadbd;
+    border-radius: 50%;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover */
+#isExpandedByDefault:hover {
+    border-color: #3db4f2;
+}
+
+#isExpandedByDefault:hover::before {
+    background-color: #edf1f5;
+}
+
+/* État actif / coché */
+#isExpandedByDefault:checked {
+    background-color: rgba(61, 180, 242, 0.2);
+    border-color: #3db4f2;
+    box-shadow: 0 0 10px rgba(61, 180, 242, 0.3);
+}
+
+#isExpandedByDefault:checked::before {
+    transform: translateX(18px);
+    background-color: #3db4f2;
+}
+
         /* MalSync Styles */
         .ms-row { margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: #ddd; }
         .ms-row label { cursor: pointer; display: flex; align-items: center; gap: 8px; }
@@ -157,6 +206,9 @@
                 <button class="al-arrow-btn" data-target="spinnerDuration" data-dir="down">▼</button>
             </div>
         </div>
+
+        <label for="isExpandedByDefault">Quick Editor ouvert par défaut</label>
+        <input type="checkbox" id="isExpandedByDefault">
 
         <label>Configuration des Listes</label>
         <div id="listsContainer"></div>

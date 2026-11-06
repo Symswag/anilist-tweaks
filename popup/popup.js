@@ -53,6 +53,7 @@ function saveAnilistOptions() {
         notifList: document.getElementById('notifList') ? document.getElementById('notifList').value : '',
         removeList: document.getElementById('removeList') ? document.getElementById('removeList').value : '',
         spinnerDuration: spinnerDuration,
+        isExpandedByDefault: document.getElementById('isExpandedByDefault') ? document.getElementById('isExpandedByDefault').checked : false,
         listsConfig: JSON.stringify(listsConfigArray)
     }, function() {
         // Notification visuelle de succès
@@ -75,13 +76,15 @@ async function restoreAnilistOptions() {
         notifList: 'Not Yet', 
         listsConfig: '[{"name": "VF Supremacy", "color": "#00ffff"}]', 
         spinnerDuration: 3, 
-        removeList: 'Close At Hand'
+        removeList: 'Close At Hand',
+        isExpandedByDefault: false
     }, async function(items) {
         // 1. Restauration des champs texte et numériques basiques
         if (document.getElementById('supabaseUrl')) document.getElementById('supabaseUrl').value = items.supabaseUrl;
         if (document.getElementById('supabaseKey')) document.getElementById('supabaseKey').value = items.supabaseKey;
         if (document.getElementById('tableName')) document.getElementById('tableName').value = items.tableName;
         if (document.getElementById('spinnerDuration')) document.getElementById('spinnerDuration').value = items.spinnerDuration;
+        if (document.getElementById('isExpandedByDefault')) document.getElementById('isExpandedByDefault').checked = items.isExpandedByDefault;
 
         // 2. Vérification de la connexion AniList via le Token
         const statusEl = document.getElementById('anilistStatus');
