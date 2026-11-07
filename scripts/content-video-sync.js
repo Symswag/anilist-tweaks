@@ -300,7 +300,7 @@
             try {
                 const parsedUrl = new URL(window.location.href);
 
-                if (parsedUrl.origin === 'https://anilist.co' && parsedUrl.pathname.startsWith('/user/' + TARGET_USERNAME)) {
+                if (parsedUrl.origin === 'https://anilist.co' && parsedUrl.pathname === '/user/' + TARGET_USERNAME + '/') {
                     // Évite la création de boutons en double si la fonction ré-exécute
                     if (document.getElementById('custom-supabase-sync-btn')) return;
 
