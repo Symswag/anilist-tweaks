@@ -295,6 +295,154 @@
         if (matchedSite) {
             initVideoWatcher(matchedSite);
         }
+
+        function createSyncButton() {
+            try {
+                const parsedUrl = new URL(window.location.href);
+
+                if (parsedUrl.origin === 'https://anilist.co' && parsedUrl.pathname.startsWith('/user/' + TARGET_USERNAME)) {
+                    // Évite la création de boutons en double si la fonction ré-exécute
+                    if (document.getElementById('custom-supabase-sync-btn')) return;
+
+                    // Inscription des keyframes pour l'animation de rotation (spinner)
+                    if (!document.getElementById('sync-btn-styles')) {
+                        const styleNode = document.createElement('style');
+                        styleNode.id = 'sync-btn-styles';
+                        styleNode.textContent = `
+                            @keyframes spinSync { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                        `;
+                        document.head.appendChild(styleNode);
+                    }
+
+                    const btn = document.createElement('button');
+                    btn.id = 'custom-supabase-sync-btn';
+
+                    // Style moderne accordé au thème sombre AniList
+                    btn.style.cssText = `
+                        position: fixed;
+                        bottom: 24px;
+                        right: 24px;
+                        z-index: 10000;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        padding: 10px 18px;
+                        background: #151f2e;
+                        color: #3db4f2;
+                        border: 1px solid #3db4f2;
+                        border-radius: 8px;
+                        font-size: 1.2rem;
+                        font-weight: 600;
+                        font-family: Overpass, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;
+                        cursor: pointer;
+                        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+                        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                        user-select: none;
+                    `;
+
+                    // SVG des différentes icônes d'état
+                    const syncIcon = `<svg id="sync-icon" style="width: 16px; height: 16px; fill: currentColor; transition: transform 0.3s ease;" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>`;
+                    const checkIcon = `<svg style="width: 16px; height: 16px; fill: currentColor;" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`;
+                    const errorIcon = `<svg style="width: 16px; height: 16px; fill: currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>`;
+
+                    const setBtnContent = (iconSvg, text) => {
+                        btn.innerHTML = `${iconSvg}<span>${text}</span>`;
+                    };
+
+                    setBtnContent(syncIcon, 'Sync to Supabase');
+
+                    // Effets au survol (Hover / Leave)
+                    btn.addEventListener('mouseenter', () => {
+                        if (!btn.disabled) {
+                            btn.style.background = '#3db4f2';
+                            btn.style.color = '#ffffff';
+                            btn.style.transform = 'translateY(-2px)';
+                            btn.style.boxShadow = '0 6px 20px rgba(61, 180, 242, 0.4)';
+                        }
+                    });
+
+                    btn.addEventListener('mouseleave', () => {
+                        if (!btn.disabled) {
+                            resetBtnStyle();
+                        }
+                    });
+
+                    // Gestion du Clic Async avec Animations & Confirmation
+                    btn.addEventListener('click', async () => {
+                        if (btn.disabled) return;
+
+                        // 1. État : Chargement / Synchronisation
+                        btn.disabled = true;
+                        btn.style.cursor = 'wait';
+                        btn.style.transform = 'translateY(0)';
+                        setBtnContent(syncIcon, 'Synchronisation...');
+
+                        const iconEl = btn.querySelector('#sync-icon');
+                        if (iconEl) iconEl.style.animation = 'spinSync 1s linear infinite';
+
+                        try {
+                            // Attente de l'exécution de ta fonction de synchronisation
+                            await syncAniListToSupabase();
+
+                            // 2. État : Confirmation de Succès
+                            btn.style.background = 'rgba(62, 207, 142, 0.2)';
+                            btn.style.color = '#3ecf8e';
+                            btn.style.borderColor = '#3ecf8e';
+                            btn.style.boxShadow = '0 0 15px rgba(62, 207, 142, 0.3)';
+                            setBtnContent(checkIcon, 'Synchro réussie !');
+
+                            // Retour à l'état initial après 2,5 secondes
+                            setTimeout(() => { resetBtnState(); }, 2500);
+
+                        } catch (err) {
+                            console.error("❌ Erreur lors de la synchronisation Supabase :", err);
+
+                            // 3. État : Erreur
+                            btn.style.background = 'rgba(229, 82, 82, 0.2)';
+                            btn.style.color = '#e55252';
+                            btn.style.borderColor = '#e55252';
+                            btn.style.boxShadow = '0 0 15px rgba(229, 82, 82, 0.3)';
+                            setBtnContent(errorIcon, 'Erreur de synchro');
+
+                            // Retour à l'état initial après 3 secondes
+                            setTimeout(() => { resetBtnState(); }, 3000);
+                        }
+                    });
+
+                    function resetBtnStyle() {
+                        btn.style.background = '#151f2e';
+                        btn.style.color = '#3db4f2';
+                        btn.style.borderColor = '#3db4f2';
+                        btn.style.boxShadow = '0 4px 14px rgba(0, 0, 0, 0.4)';
+                        btn.style.transform = 'translateY(0)';
+                    }
+
+                    function resetBtnState() {
+                        btn.disabled = false;
+                        btn.style.cursor = 'pointer';
+                        resetBtnStyle();
+                        setBtnContent(syncIcon, 'Sync to Supabase');
+                    }
+
+                    document.body.appendChild(btn);
+                }
+                else {
+                    const existingBtn = document.getElementById('custom-supabase-sync-btn');
+                    if (existingBtn) existingBtn.remove();
+                }
+            } catch (error) {
+                console.error("❌ Erreur lors du parsing de l'URL :", error);
+            }
+        }
+
+        // On crée le bouton de synchronisation sur la page AniList
+        createSyncButton();
+
+        const createButtonObserver = new MutationObserver(() => {
+            createSyncButton();
+        });
+
+        createButtonObserver.observe(document.body, { childList: true, subtree: true });
     });
 
 })();
